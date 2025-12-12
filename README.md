@@ -14,7 +14,6 @@ The coursework is implemented in **R / R Markdown** and includes simulation-base
 ├── cw_functions.R      # Helper / utility functions used in the analysis
 ├── data/               # Input data (.Rdata files) – see notes below
 ├── assets/             # Assets (e.g., University logo) – see notes below
-├── output/             # Generated outputs (HTML / PDF)
 ├── README.md
 └── LICENSE
 ```
@@ -52,22 +51,19 @@ The coursework is implemented in **R / R Markdown** and includes simulation-base
    ```r
    source("cw_functions.R")
    rmarkdown::render(
-     input = "cw_ekarsi.Rmd",
-     output_dir = "output"
+     input = "cw_ekarsi.Rmd"
    )
    ```
 
-4. The rendered HTML/PDF will be available in the `output/` directory.
+4. The rendered HTML/PDF will be available in the `~` directory.
 
 ---
 
 ## Data and Asset Notes
 
 - The `data/` directory contains coursework-specific `.Rdata` files.
-  - If this repository is public, the data may be excluded for licensing or assessment reasons.
-  - In that case, obtain the data from the official module source and place it in `data/`.
 
-- The `assets/` directory may contain the University of Birmingham logo.
+- The `assets/` directory contain the University of Birmingham logo.
   - This is used strictly for academic presentation purposes.
 
 ---
