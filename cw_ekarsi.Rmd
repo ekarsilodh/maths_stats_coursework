@@ -1,0 +1,2826 @@
+---
+title: "<img src='assets/UoB.jpeg' style='width:50%; margin-bottom:10px;'/><br/>MSc Bioinformatics - Essentials of Mathematics, and Statistics - Coursework"
+author: "Ekarsi Lodh"
+date: "2025-12-12"
+output:
+    html_document: default
+    pdf_document: 
+      latex_engine: xelatex
+    word_document: default
+editor_options: 
+    chunk_output_type: console
+header-includes:
+    - \usepackage[dvipsnames]{xcolor}
+    - \usepackage{float}
+    - \geometry{a4paper,total={175mm,257mm},left=14mm,right=13mm,top=16mm}
+    - | 
+      \usepackage{graphicx}
+      \usepackage{titling}
+      \pretitle{\begin{center}\includegraphics[width=0.4\textwidth]{assets/UoB.jpeg}\\[1ex]\LARGE\bfseries}
+      \posttitle{\end{center}}
+      \preauthor{\begin{center}\large\bfseries}
+      \postauthor{\end{center}}
+---
+
+```{r setup, include=FALSE}
+# Set some global options including loading necessary packages
+knitr::opts_chunk$set(echo = TRUE, tidy = FALSE)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(waldo)
+library(patchwork)
+
+# Load the script with your own functions
+source("cw_functions.R")
+```
+
+# 1 Markov Chain Game Simulations
+Markov chains are stochastic processes that move between states with certain probabilities. In this question, you will simulate a simple “Mountain Climb” board game using a Markov chain approach. The rules of the game are as follows:
+
+- **Start:** Player begins at the base of the mountain (position **0**).
+- **Goal:** Reach the summit (position **70**).
+- **Movement:**  
+  - Each turn, the player rolls a fair **six-sided die (1–6)**.  
+  - The player moves forward by the number rolled.
+
+- **Slippery squares (penalty):**  
+  - Triggered when landing on a **multiple of 9**:  
+    - 9, 18, 27, 36, 45, 54, 63  
+  - The player slides back **1–3 positions**, chosen uniformly at random.
+
+- **Climbing squares (bonus):**  
+  - Triggered when landing on a **multiple of 16**:  
+    - 16, 32, 48, 64  
+  - The player moves **+5 additional positions**.
+
+- **End condition:**  
+  - The game ends immediately when the player reaches or exceeds **position 70**.
+
+## `<span style="color: blue;">Q1</span>`{=html}`\textcolor{blue}{Q1}`{=latex}
+Review the following code snippet, which attempts to simulate a simple board game. Adapt it to the Mountain Climb rules above. Comment each line, explain its purpose, and fix any mistakes. `<span style="color: DarkOrange; font-weight: bold">[3 MARKS]</span>`{=html}`\textcolor{orange}{\textbf{[3 MARKS]}}`{=latex}
+
+```r
+play_mc <- function(start_pos = 0) {
+  die <- sample.int(6, 1)
+  pos <- start_pos
+
+  pos <- pos + die
+
+  if (pos < 70) {
+    pos <- 70
+    return(pos)
+  }
+}
+```
+
+### `<span style="color: blue;">Answer</span>`{=html}`\textcolor{blue}{Answer}`{=latex}
+The board game "Mountain Climb" represents a **Markov Chain** model, in which the **next position** of the player in the game at any given point of time **depends solely on the current position** and not on the positions which came before it, the turns that were taken, or the routes that were traveled. 
+
+In each turn, a **fair six-sided die** is rolled, with the results falling within the set {1, 2, 3, 4, 5, 6}, and the player's position advances according to the number rolled.
+
+**The states gets updated as follows:**
+
+1. The state refers to the current position, i.e. 
+`<div style="text-align:center; color: DarkViolet;"><strong>the state = current position</strong></div>`{=html}
+   `\begin{center}\textcolor{violet}{\textbf{the state = current position}}\end{center}`{=latex}
+2. The next state is determined by adding the die roll to the current position, factoring in any effects from special squares (such as sliding or climbing), represented as,
+`<div style="text-align:center; color: DarkViolet;"><strong>next state = current position + die_roll ± special square effects (slippery/climbing)</strong></div>`{=html}
+   `\begin{center}\textcolor{violet}{\textbf{next state = current position + die roll $\pm$ special square effects (slippery/climbing)}}\end{center}`{=latex}
+3. The starting position is set to 0, i.e.
+`<div style="text-align:center; color: DarkViolet;"><strong>start position = 0</strong></div>`{=html}
+   `\begin{center}\textcolor{violet}{\textbf{start position = 0}}\end{center}`{=latex}
+4. The game concludes when the player `<span style="color: DarkDarkViolet; font-weight: bold;">reaches or surpasses position 70</span>`{=html}`\textcolor{violet}{\textbf{reaches or surpasses position 70}}`{=latex}.
+
+**Regarding special square effects:**
+
+1. `<span style="color: brown; font-weight: bold;">Slippery squares</span>`{=html}`\textcolor{brown}{\textbf{Slippery squares}}`{=latex}:  
+When players land on `<span style="color: DarkViolet; font-weight: bold;">multiples of 9</span>`{=html}`\textcolor{violet}{\textbf{multiples of 9}}`{=latex}, specifically at positions 9, 18, 27, 36, 45, 54, and 63, they incur a penalty. Landing on any of these squares results in a slide back of either **1, 2, or 3 spaces**, with each outcome being **equally probable (1/3 chance for each)**.
+
+The transition from these positions is as follows:
+
+- a `<span style="color: DarkViolet; font-weight: bold;">1/3 probability of moving to pos - 1</span>`{=html}`\textcolor{violet}{\textbf{1/3 probability of moving to pos - 1}}`{=latex}
+   
+- a `<span style="color: DarkViolet; font-weight: bold;">1/3 probability of moving to pos - 2</span>`{=html}`\textcolor{violet}{\textbf{1/3 probability of moving to pos - 2}}`{=latex}
+   
+- a `<span style="color: DarkViolet; font-weight: bold;">1/3 probability of moving to pos - 3</span>`{=html}`\textcolor{violet}{\textbf{1/3 probability of moving to pos - 3}}`{=latex}
+
+2. `<span style="color: brown; font-weight: bold;">Climbing squares</span>`{=html}`\textcolor{brown}{\textbf{Climbing squares}}`{=latex}:  
+When players land on `<span style="color: DarkViolet; font-weight: bold;">multiples of 16</span>`{=html}`\textcolor{violet}{\textbf{multiples of 16}}`{=latex}, specifically at positions 16, 32, 48, and 64, they receive a benefit. Landing on any of these squares results in a **move ahead by 5 spaces (a JUMP)**, accelerating their progress. In this scenario:
+
+- next position is calculated as current position + 5, i.e.
+`<div style="text-align:center; color: DarkViolet;"><strong>next position = current position + 5</strong></div>`{=html}`\begin{center}\textcolor{violet}{\textbf{next position = current position + 5}}\end{center}`{=latex}
+
+#### The given code is incorrect for the following reasons:
+
+1. The code attempting to simulate a simple board game has a critical error in the last three lines, as the function wrongly sets `<span style="color: DarkViolet; font-weight: bold;">the position to 70 whenever the player is below 70</span>`{=html}`\textcolor{violet}{\textbf{the position to 70 whenever the player is below 70}}`{=latex}. Consequently, the game would consistently conclude after a single turn, since the position would only range between 1 and 6 after the initial roll, all of which are less than 70.
+
+2. The function does not account for the rules regarding **slippery and climbing squares**. I have made corrections in that regard.
+
+3. There is **no observable Markov chain behaviour**. A Markov chain requires that each subsequent state is determined solely by the current state, but this function makes an `<span style="color: DarkViolet; font-weight: bold;">abrupt jump from 0 to 70 in a single step (pos <- 70)</span>`{=html}`\textcolor{violet}{\textbf{abrupt jump from 0 to 70 in a single step (pos <- 70)}}`{=latex}, bypassing any transitions.
+
+4. The function **ends prematurely** since there isn't a loop, the game state isn't updated repeatedly.
+
+#### The correct logic is as follows:  
+
+To accurately model the "Mountain Climb Game", the following changes are made to the function so that:
+
+a. Each move is determined by a roll of a fair die.  
+b. Landing on a slippery square causes the player to move backward by between 1 and 3 steps.  
+c. Landing on a climbing square propels the player forward by +5 steps.  
+d. The position is updated progressively, creating a series of states that align with a Markov chain.  
+e. The game concludes only when the position reaches or surpasses 70.  
+
+
+```{r}
+#function to simulate a single turn ONE TURN on the mountain climb game
+play_mc <- function(start_pos = 0) {
+  
+  #roll a fair 6 sided die, with values ∈ {1, 2, 3, 4, 5, 6}, 
+  #while returning an integer between (1 to 6)
+  die <- sample.int(6, 1)
+  
+  #stores current position, here the current position is the starting position
+  pos <- start_pos
+  
+  #moves formard by the die roll
+  pos <- pos + die
+  
+  #-----Apply the special rules if the player haven't reached the summit-----
+  if (pos < 70) {
+    
+    #-----Slippery squares; i.e. player lands on multiple of 9-----
+    if (pos %% 9 == 0) {
+      slide <- sample(1:3, 1)       #uniformly choose 1-3
+      pos <- pos - slide            #slides back uniformly by random 1-3 spaces
+      pos <- max(pos, 0)            #avoid negative position if pos < slide
+    }
+    
+    #-----Climbing squares; i.e. player lands on multiple of 16-----
+    if (pos %% 16 == 0) {
+      pos <- pos + 5                #jumps 5 positions
+    }
+    
+    #if after all moves player reaches or exceeds 70, end immediately
+    if (pos >= 70) {
+      pos <- 70                     #cap the position at 70 (maximum)
+      return(pos)
+    }
+    
+    #otherwise return the updated position
+    return(pos)
+  }
+  
+  #if the pos is already >= 70
+  if (pos >= 70) {
+    pos <- 70                       #cap to 70
+    return(pos)
+  }
+}
+```
+
+#### Just testing the above function 
+
+To test the above function and to simulate full games with **turns 100, 200, 300, and 400** the following is done.
+
+```{r}
+#set the seed for reproducible simulations
+set.seed(200)
+
+#simulations for 100,200,300,400 times run
+res_100 <- replicate(100, mc_sims())         #100 independent simulations
+res_200 <- replicate(200, mc_sims())         #200 independent simulations
+res_300 <- replicate(300, mc_sims())         #300 independent simulations
+res_400 <- replicate(400, mc_sims())         #400 independent simulations
+```
+
+The `<span style="color: DarkViolet; font-weight: bold;">mc_sims()</span>`{=html}`\textcolor{violet}{\textbf{\texttt{mc\_sims()}}}`{=latex} function simulates one full game of Mountain Climb by calling the **`play_mc`** transition function, which simulates one turn and its consequence, i.e., transition. Each iteration of the while loop corresponds to **one Markov chain transition**, encompassing a die roll and any special square effects that may apply. The loop terminates as soon as the position reaches or exceeds 70, which is the **absorbing state of the Markov chain**. The output indicates the **number of turns (transitions)** required to **finish the game or reach the absorbing state**.
+
+Then, after establishing a seed to ensure consistent results across multiple executions of the function (allowing for exact replication of outcomes), the **`simulate_game()`** function is executed to play the full game 100, 200, 300, and 400 times, each with its unique random die rolls. This allows comparison of how the **distribution stabilizes or stays unchanged as sample size increases**. The turn count distribution will converge to the Markov chain's true underlying distribution as the sample size increases. 
+
+### The following code chunk is for generating Fig. 1:   
+
+```{r fig.width=12, fig.align='center'}
+# Creating a clean data frame by combining the 
+#simulation result vectors (100, 200, 300, 400 runs) and 
+#labeling each group so they may be compared or visualized independently.
+
+df <- bind_rows(
+  data.frame(turns = res_100, sample = "100 runs"),
+  data.frame(turns = res_200, sample = "200 runs"),
+  data.frame(turns = res_300, sample = "300 runs"),
+  data.frame(turns = res_400, sample = "400 runs"),
+)
+
+#generating the plots
+#'turns' as the x-axis variable, and fill based on the no. of runs
+ggplot(df, aes(x = turns, fill = sample)) + 
+#histogram with 20 bins each
+  geom_histogram(color="black", bins=20, alpha=0.7) +
+  #separate panel for each no. of runs, also different y scales
+  facet_wrap(~ sample, scales="free_y") +
+  
+  #plot appearance customization
+  theme(
+    plot.title = element_text(               #title styling
+      size = 13,                             
+      face = "bold",                         #making bold
+      hjust = 0.5                            #centering
+    ),
+    axis.title.x = element_text(size = 11),  #X-axis title font size
+    axis.title.y = element_text(size = 11),  #Y-axis title font size
+    axis.text.x = element_text(size = 10),   #X-axis tick labels size
+    axis.text.y = element_text(size = 10)    #Y-axis tick labels size
+  ) +
+
+  #adding plot title
+  labs(
+    title = "Fig. 1: Distribution of Turns Needed to Finish the Game in Each Simulation",   
+                           #plot title
+    x = "Number of Turns", #x-axis label
+    y = "Frequency"        #y-axis label
+  )
+```
+
+## `<span style="color: blue;">Q2</span>`{=html}`\textcolor{blue}{Q2}`{=latex}
+Extending the code above (or writing your own), implement a function that simulates a complete Mountain Climb game. It should track the player’s position after each turn and return the total number of turns needed to reach the summit. `<span style="color: DarkOrange; font-weight: bold">[5 MARKS]</span>`{=html}`\textcolor{orange}{\textbf{[5 MARKS]}}`{=latex}  
+
+  - Function name: `play_mc_full`
+  - Function input: `start_pos`, `max_turns`, `slippery_squares`, `climbing_squares`, `slip_back_range`, `climb_up_amount`, `max_pos`
+  - Function output: list with elements `pos_history` and `turns_taken`
+
+Use sensible default values for the function parameters. The function should simulate the game according to the rules provided above without any user input during execution, or choice of parameters outside of the function call, but the user should be able to specify different parameters when calling the function. Execute the function to demonstrate it works as expected, using the default parameters and show the output.
+
+### `<span style="color: blue;">Answer</span>`{=html}`\textcolor{blue}{Answer}`{=latex}
+To simulate a complete implementation of the "Mountain Climb" game, I implemented a function **`play_mc_full()`**, in the *`cw_functions.R`* file, which repeatedly applies the **transition rules of the Markov chain** until the player **reaches or exceeds the summit at position 70**. The function accepts flexible inputs so that the behaviour of the game can be modified, but I have also provided sensible defaults which corresponds exactly to the rules given in the question.  
+
+The function begins at a user-specified starting position `<span style="color: DarkViolet; font-style: italic;">(default set to 0)</span>`{=html}`{violet}{\textit{(default set to 0)}}`{=latex} and rolls a fair six-sided die on each turn. After each move, it checks whether the player has landed on a `<span style="color: DarkViolet; font-style: italic;">slippery square (multiples 0f 9)</span>`{=html}`\textcolor{violet}{\textit{slippery square (multiples 0f 9)}}`{=latex} or a `<span style="color: DarkViolet; font-style: italic;">climbing square (multiples 0f 16)</span>`{=html}`\textcolor{violet}{\textit{climbing square (multiples 0f 16)}}`{=latex}. Slippery suqares apply a backward movement **drawn uniformly from 1-3** steps,while climbing squares move the player forward by a fixed amount *(default +5)*. These transition rules make the process a **Markov chain**, because the next state depends only on the current position and not on the history of the game.
+
+The function continues to update the player's position until *one of the two* stopping conditions is reached:  
+
+i. the player **reaches or passes the summit position** `<span style="color: DarkViolet; font-style: italic;">(default set to 70)</span>`{=html}`\textcolor{violet}{\textit{(default set to 70)}}`{=latex}
+
+ii. a safety cap on the total number of turns `<span style="color: DarkViolet; font-weight: bold;">(max_turns)</span>`{=html}`\textcolor{violet}{\textbf{(\texttt{max\_turns})}}`{=latex} is exceeded.
+
+Throughout the simulation, the function records the full position history, which allows the entire state trajectory to be examined afterwards. Finally, it returns a list containing the following:
+
+- `<span style="color: DarkViolet; font-weight: bold;">pos_history:</span>`{=html}`\textcolor{violet}{\textbf{\texttt{pos\_history}:}}`{=latex} a vector of all positions visited in order, and
+
+- `<span style="color: DarkViolet; font-weight: bold;">turns_taken:</span>`{=html}`\textcolor{violet}{\textbf{\texttt{turns\_taken}:}}`{=latex} the total number of turns required to reach the summit.
+
+To show that the function works as expected, I executed it with the default parameters and printed the no. of turns taken as well as the begining and end of the position history.
+
+```{r}
+set.seed(200)                          #for reproducibility
+default_run <- play_mc_full()          #calling the function with the default parameters.
+
+default_run$pos_history                #displaying the positions
+default_run$turns_taken                #displaying the no. of turns taken
+```
+
+The simulation's reproducibility is guaranteed by using a fixed random seed. The output reported is consistent since set.seed(200) ensures that the dice rolls and random slip-back values are the same each time the code block is executed. A vector storing all of the positions visited and the total no. of turns needed to reach the summit are the two outputs of running **`play_mc_full()`** function. 
+
+In this simulation, the player advances steadily until position 70, occasionally encountering forward jumps on multiples of 16 and backward slides on multiples of 9. The stochastic aspect of the transition dynamics is reflected in the precise order of visited positions: favourable positions greatly expedite movement, while small die rolls can impede progress. 
+
+## `<span style="color: blue;">Q3</span>`{=html}`\textcolor{blue}{Q3}`{=latex}
+Now write a function to simulate multiple games of mountain climb and calculate the average number of turns taken to reach the summit across all simulations. `<span style="color: DarkOrange; font-weight: bold">[4 MARKS]</span>`{=html}`\textcolor{orange}{\textbf{[4 MARKS]}}`{=latex}  
+
+- Function name: `simulate_climbs`
+- Function input: `n_simulations`, other parameters as in `play_mc_full`
+- Function output: List with elements
+  - `turns_vector`: number of turns taken in each simulation
+  - `turns_stats`: named vector with mean, median, sd (in this order)
+  - `all_histories`: list of pos_history vectors for each simulation
+  
+Run the simulation for 100 games and report the average number of turns taken to reach the summit. Plot a histogram of the number of turns taken across all simulations.
+
+### `<span style="color: blue;">Answer</span>`{=html}`\textcolor{blue}{Answer}`{=latex}
+I implemented a function `<span style="color: DarkViolet; font-weight: bold;">simulate_climbs()</span>`{=html}`\textcolor{violet}{\textbf{\texttt{simulate\_climbs()}}}`{=latex}, which is designed to automate the repeated simulation of the "Mountaion Climn" game by calling ***`play_mc_full()`*** multiple times and summarising the results. The function takes the no. of simulations `<span style="color: DarkViolet; font-weight: bold;">(n_simulations)</span>`{=html}`\textcolor{violet}{\textbf{(\texttt{n\_simulations})}}`{=latex} as its main argument, along with the same parameter set used by ***`play_mc_full()`***, which allows the user to easily alter the game rules if needed. Inside the function, a numeric vector `<span style="color: DarkViolet; font-weight: bold;">turns_vector</span>`{=html}`\textcolor{violet}{\textbf{\texttt{turns\_vector}}}`{=latex} is created to store the no. of turns taken to reach the summit in **each individual game**, while a list `<span style="color: DarkViolet; font-weight: bold;">all_histories</span>`{=html}`\textcolor{violet}{\textbf{\texttt{all\_histories}}}`{=latex} is used to store the full sequence of positions visited for every simulations. **For each run**, the function executes ***`play_mc_full()`***, extracts the final turn count and positions, and appends them to the corresponding storage objects. Once all simulations are complete, the function computes certain statistical measures; `<span style="color: DarkViolet; font-style: italic;">mean, median, and standard deviation</span>`{=html}`\textcolor{violet}{\textit{mean, median, and standard deviation}}`{=latex} of the turn counts, which is returned in the named vector `<span style="color: DarkViolet; font-weight: bold;">turns_stats</span>`{=html}`\textcolor{violet}{\textbf{\texttt{turns\_stats}}}`{=latex}.
+
+The output of the function is therefore a structured list containing three components that together summarise both the duration and detailed behaviour of all the simulated games:
+
+- `<span style="color: DarkViolet; font-weight: bold;">turns_vector:</span>`{=html}`\textcolor{violet}{\textbf{\texttt{turns\_vector}:}}`{=latex} reporting the no. of turns taken in each game,
+
+- `<span style="color: DarkViolet; font-weight: bold;">turns_stats:</span>`{=html}`\textcolor{violet}{\textbf{\texttt{turns\_stats}:}}`{=latex} providing simple summary statistics of these durations, and
+
+- `<span style="color: DarkViolet; font-weight: bold;">all_histories:</span>`{=html}`\textcolor{violet}{\textbf{\texttt{all\_histories}:}}`{=latex} enabling further inspection or visualization of individual game trajectories.
+
+`<details><summary>Show Function Code (Click to Reveal)</summary>`{=html}
+```r
+#function sourced from cw_functions.R (Q3)
+simulate_climbs <- function(
+  n_simulations = 100,                      #number of games to simulate
+  start_pos = 0,                            #starting position of the player 
+  max_turns = 500,                          #safety cap on no. of turns
+  slippery_squares = seq(9, 63, by = 9),    #default: multiples of 9 upto 63, 
+                                            #denoting slippery squares
+  climbing_squares = seq(16, 64, by = 16),  #default: multiples of 16 upto 64, 
+                                            #denoting climbing squares
+  slip_back_range = 1:3,                    #default: player slides back by 
+                                            #1, 2 or 3 positions on slippery 
+                                            #squares
+  climb_up_amount = 5,                      #default: player climbs +5 
+                                            #positions on climbing squares
+  max_pos = 70                              #default: summit position
+) {
+  
+  #numeric vector to store the no. of turns taken in each simulation
+  turns_vector <- numeric(n_simulations)
+  
+  #list for storing position history of each game
+  all_histories <- vector("list", n_simulations)
+  
+  #run simulations
+  for (i in seq_len(n_simulations)) {
+    #run a complete mountain climb game with all the parameters
+    game_result <- play_mc_full(
+      start_pos = start_pos,
+      max_turns = max_turns,
+      slippery_squares = slippery_squares,
+      climbing_squares = climbing_squares,
+      slip_back_range = slip_back_range,
+      climb_up_amount = climb_up_amount,
+      max_pos = max_pos
+    )
+    
+    #saving the no. of turns required
+    turns_vector[i] <- game_result$turns_taken
+    
+    #saving the positions visited
+    all_histories[[i]] <- game_result$pos_history
+  }
+  
+  #-----Summary statistics for no. of turns taken-----
+  turns_stats <- c(
+    mean = mean(turns_vector),             #avg no. of turns
+    median = median(turns_vector),         #middle value
+    sd = sd(turns_vector)                  #standard deviation, value spread
+  )
+  
+  #-----Return as a single list-----
+  return(
+    list(
+      turns_vector = turns_vector,    #no. of turns for each simulation
+      turns_stats = turns_stats,      #summary stats of turns
+      all_histories = all_histories   #position visited in all simulations
+    )
+  )
+}
+```
+`</details>`{=html}
+
+```{r}
+set.seed(200)                          #for reproducibility
+n_simulations = 100                    #defining no. of simulations to run
+
+#simulating the game with default parameters
+sim_results <- simulate_climbs(n_simulations = n_simulations)       
+
+#summary statistics (mean, median, sd of turns)
+sim_results$turns_stats
+
+#mean no. of turns dor 100 games
+sim_results_mean <- sim_results$turns_stats["mean"]
+paste("Mean of the no. of turns for", n_simulations, "games =", sim_results_mean)
+```
+
+The simulation's reproducibility is guaranteed by using a fixed random seed of 200 *(`set.seed(200)`)*. The results are saved in *`sim_results`* after the simulation is run for 100 separate games. The overall average no. of turns required to reach the summit is recorded in `<span style="color: DarkViolet; font-weight: bold;">sim_results_mean</span>`{=html}`\textcolor{violet}{\textbf{\texttt{sim\_results\_mean}}}`{=latex} and also a turn count histogram is created using the following code using *`ggplot2`*, to show the variability throughout 100 simulations.
+
+### The following code chunk is for generating Fig. 2:  
+
+```{r fig.align='center', out.width = if (knitr::is_latex_output()) "0.7\\textwidth"}
+#converting turns_vector to dataframe for ggplot
+turns_df <- data.frame(turns = sim_results$turns_vector)
+
+#computing histogram bin max height
+bin_info <- hist(turns_df$turns, breaks = 13, plot = FALSE)
+max_y <- max(bin_info$counts) + 1     #set max y height as max bin + 1
+#print(max_y)
+
+#ggplot histogram using no. of turns taken in each simulation
+ggplot(
+  turns_df,                           #turns_vector df
+  aes(x = turns)                      #x-axis represents no. of turns
+) +
+
+#plotting the histogram
+geom_histogram(
+  bins = 13,                          #20 histogram bins
+  fill = "greenyellow",                   #fill colour
+  color = "black",                    #border colour
+  linewidth = 0.4                     #outline thickness
+) +
+  
+#frequency on top of each bar
+stat_bin(
+bins = 13,                            #ensuring text labels correspond exactly 
+                                      #to the same bin 
+geom = "text",                        #text labels instead of bars
+aes(label = after_stat(count)),       #observation frequency in each bin
+vjust = -0.3,                         #labels slightly above each bar
+size = 4,                             #size of the text labels
+color = "black"                       #label colour
+) +
+
+#vertical dashed line for the mean no. of turns
+geom_vline(
+  xintercept = sim_results_mean,      #mean of no. of turn counts
+  linetype = "dashed",                #dashed line
+  linewidth = 0.8,                               
+  color = "#D62728"                              
+) +
+
+#annotate the mean value
+annotate(
+  "text",                                            #text annotation
+  x = sim_results_mean,                              #text at mean on x-axis
+  y = Inf,                                           #text at top of plot
+  label = paste("Mean turns =", sim_results_mean),   #label text
+  vjust = 2,                                         #text slightly downwards 
+                                                     #to contain in frame
+  hjust = -0.2,                                      #text slightly right 
+                                                     #shifted for better readability
+  size = 4,                                      
+  color = "#D62728",                             
+  fontface = "bold"                              
+) +
+
+#adjusted y limit
+ylim(0, max_y) +
+
+#plot appearance customization
+theme(
+  plot.title = element_text(               #title styling
+    size = 10,                             
+    face = "bold",                         #making bold
+    hjust = 0.5                            #centering
+  ),
+  axis.title.x = element_text(size = 11),  #X-axis title font size
+  axis.title.y = element_text(size = 11),  #Y-axis title font size
+  axis.text.x = element_text(size = 10),   #X-axis tick labels size
+  axis.text.y = element_text(size = 10)    #Y-axis tick labels size
+) +
+
+#adding plot title
+labs(
+  title = "Fig. 2: Distribution of Required Turn to Reach Summit for 100 game simulations",
+                                          #main title
+  x = "Turns to Reach Position 70",       #x-axis label
+  y = "Frequency"                         #y-axis label
+)
+```
+
+The distribution of turns required for reaching the summit (position 70) throughout the individual 100 games simulations is shown in the histogram *(Fig. 2)*. The y-axis shows how frequently each turn count occurs, while the x-axis shows how many turns are taken during a game. The distribution's central tendency is emphasized by the addition of a vertical dashed line representing the *mean*. The stochastic character of the game, which is influenced by special-square effects and random die rolls, is reflected in the histogram's shape.
+
+### **Distribution Result Interpretation**  
+  
+The histogram shows the distribution of the number of turns required to reach or exceed the summit i.e. position 70 throughout 100 independently simulated "Mountain Climb" games. The results are centered around approximately `<span style="color: DarkViolet; font-weight: bold;">20 turns</span>`{=html}`\textcolor{violet}{\textbf{20 turns}}`{=latex}, with the ***sample mean*** equal to `<span style="color: DarkViolet; font-weight: bold;">19.76</span>`{=html}`\textcolor{violet}{\textbf{19.76}}`{=latex}, indicated by the *red dashed line*. This suggests that, under the given rules, a typical game requires *close to 20 turns* to reach the absorbing state. 
+
+The distribution is moderately spread, with most games `<span style="color: DarkViolet; font-weight: bold;">completing between 17 and 23 turns</span>`{=html}`\textcolor{violet}{\textbf{completing between 17 and 23 turns}}`{=latex}, and a few *outliers* taking as few as `<span style="color: DarkViolet; font-weight: bold;">15 turns</span>`{=html}`\textcolor{violet}{\textbf{15 turns}}`{=latex} or as many as `<span style="color: DarkViolet; font-weight: bold;">27 turns</span>`{=html}`\textcolor{violet}{\textbf{27 turns}}`{=latex}. The variation reflects the ***stochastic nature*** of the Markov chain; where the **favourable sequences of die rolls** and **landing on climbing squares** *(multiples of 16)* can shorten the game, while **landing on slippery squares** *(multiples of 9)* can prolong it. Despite this randomness, the distribution remains **unimodal** with a clear **central tendency around 20 turns**, but it shows a `<span style="color: DarkViolet; font-weight: bold;">slight right skew</span>`{=html}`\textcolor{violet}{\textbf{slight right skew}}`{=latex}; where most games finish within a narrow range, with occasional longer games extend the upper (right) tail.
+
+Overall, it can be said that the games `<span style="color: DarkViolet; font-style: italic; font-weight: bold;">finishing earlier than the mean</span>`{=html}`\textcolor{violet}{\textbf{\textit{finishing earlier than the mean}}}`{=latex} benefit from `<span style="color: DarkViolet; font-weight: bold;">favourable sequences of die rolls</span>`{=html}`\textcolor{violet}{\textbf{favourable sequences of die rolls}}`{=latex} and `<span style="color: DarkViolet; font-weight: bold;">landing on climbing squares</span>`{=html}`\textcolor{violet}{\textbf{landing on climbing squares}}`{=latex}, multiple times producing `<span style="color: DarkViolet; font-style: italic;">forward jumps</span>`{=html}`\textcolor{violet}{\textit{forward jumps}}`{=latex}, which end the game early, whereas the games `<span style="color: DarkViolet; font-style: italic; font-weight: bold;">taking longer than mean</span>`{=html}`\textcolor{violet}{\textbf{\textit{taking longer than mean}}}`{=latex} is expected to experience `<span style="color: DarkViolet; font-weight: bold;">more of landing on slippery squares</span>`{=html}`\textcolor{violet}{\textbf{more of landing on slippery squares}}`{=latex}, introducing `<span style="color: DarkViolet; font-style: italic;">random backward slips</span>`{=html}`\textcolor{violet}{\textit{random backward slips}}`{=latex}, delaying the game. Overall the results illustrate how the mountain climb process behaves on average and demonstrate that the simulation captures the combined effects of random movement and state dependent transitions. The estimated mean turn count provides a ***Monte-Carlo approximation*** of the expected number of steps required to reach the summit.
+
+## `<span style="color: blue;">Q4</span>`{=html}`\textcolor{blue}{Q4}`{=latex}
+`<span style="color: blue;">4.1</span>`{=html}`\textcolor{blue}{4.1}`{=latex} Using the simulation code above, estimate the average position reached by a single player after 10 turns and the variance. Plot a histogram of the position reached after 10 turns. `<span style="color: DarkOrange; font-weight: bold">[4 MARKS]</span>`{=html}`\textcolor{orange}{\textbf{[4 MARKS]}}`{=latex} 
+
+`<span style="color: blue;">4.2</span>`{=html}`\textcolor{blue}{4.2}`{=latex} Next change the `slip_back_range` to 4:8, `climb_up_amount` to 2, and re-run the simulation. How does this change affect the average position reached after 10 turns? Explain why this change occurs. `<span style="color: DarkOrange; font-weight: bold">[4 MARKS]</span>`{=html}`\textcolor{orange}{\textbf{[4 MARKS]}}`{=latex}
+
+You might find it useful to modify the `simulate_climbs` function to return positions after a fixed number of turns instead of the number of turns taken to reach the summit. The modified function should be called `simulate_pos_at`. Everything else should remain the same.
+
+### `<span style="color: blue;">Answer 4.1</span>`{=html}`\textcolor{blue}{Answer 4.1}`{=latex}
+The function **`simulate_pos_at()`**, which is sourced from an external script (cw_functions.R), is used to predict a player's projected progress after a predetermined number of turns *(10 in this case)*. This function returns the position for each game after a predefined number of turns *(10)*, in contrast to earlier simulations that continued until the summit was reached or exceeded. This enables analysis of the player's position at that precise moments across 100 game simulations.
+
+`<details><summary>Show Function Code (Click to Reveal)</summary>`{=html}
+```r
+#function sourced from cw_functions.R (Q4)
+simulate_pos_at <- function(
+    n_simulations = 100,                    #number of games to simulate
+    n_turns = 10,                           #fixed turns after which game stops
+    start_pos = 0,                          #starting position of the player 
+    max_turns = 500,                        #safety cap on no. of turns
+    slippery_squares = seq(9, 63, by = 9),  #default: multiples of 9 upto 63, 
+                                            #denoting slippery squares
+    climbing_squares = seq(16, 64, by = 16),  #default: multiples of 16 upto 64, 
+                                              #denoting climbing squares
+    slip_back_range = 1:3,                    #default: player slides back by 
+                                              #1, 2 or 3 positions on slippery 
+                                              #squares
+    climb_up_amount = 5,                      #default: player climbs +5 
+                                              #positions on climbing squares
+    max_pos = 70                              #default: summit position 
+) {
+  
+  #numeric vector to store the position after n_turns
+  pos_vector <- numeric(n_simulations)
+  
+  #list for storing position history of each game
+  all_histories <- vector("list", n_simulations)
+  
+  #run simulations
+  for (i in seq_len(n_simulations)) {
+    pos <- start_pos                                #reset position at start of each simulation
+    pos_history <- c(pos)                           #store all the positions visited
+    
+    #simulate exactly the mentioned no. of turns
+    for (t in seq_len(n_turns)) {
+      #if summit not reached
+      if (pos < max_pos) {
+        die <- sample.int(6, 1)                     #roll a fair six-sided die
+        pos <- pos + die                            #move forward by the die roll
+        
+        #-----Slippery squares; i.e. player lands on multiple of 9-----
+        if (pos %in% slippery_squares) {
+          slide <- sample(slip_back_range, 1)       #uniformly choose slip amount
+          pos <- pos - slide                        #slides back uniformly by random 1-3 spaces
+          pos <- max(pos, 0)                        #avoid negative position if pos < slide
+        }
+        
+        #-----Climbing squares; i.e. player lands on multiple of 16-----
+        if (pos %in% climbing_squares) {
+          pos <- pos + climb_up_amount              #jumps 5 positions
+        }
+        
+        #-----Cap at max_pos (absorbing state)-----
+        if (pos > max_pos) {
+          pos <- max_pos
+        }
+      }
+      
+      if (pos >= max_pos) {
+        pos <- max_pos
+      }
+      
+      #store tha pasitions visited
+      pos_history <- c(pos_history, pos)
+    }
+    
+    #position after n_turns
+    pos_vector[i] <- pos
+    
+    #saving the positions visited
+    all_histories[[i]] <- pos_history
+  }
+  
+  #-----Return summary statistics as a single list-----
+  return(
+    list(
+      positions = pos_vector,  # Final position after 'turns' in each simulation
+      mean = mean(pos_vector), # Average position reached after 'turns' turns
+      variance = var(pos_vector) # Variance of positions (spread of outcomes)
+    )
+  )
+}
+```
+`</details>`{=html}
+
+```{r}
+set.seed(200)                          #for reproducibility
+n_simulations = 100                    #defining total no. of simulations to run
+n_turns = 10                           #turn after which to stop
+
+#simulating the game with default parameters
+sim_10_results <- simulate_pos_at(n_simulations = n_simulations, n_turns = n_turns)       
+
+#position reached after 10 turns on average
+sim_10_results_mean <- sim_10_results$mean
+paste("The position reached after 10 turns on average i.e. mean =", sim_10_results_mean)
+
+#variance of the positions reached after 10 turns
+#measures the spread of final positions
+sim_10_results_variance <- sim_10_results$variance
+paste("The variance =", round(sim_10_results_variance, 2))   #round upto 2 places
+```
+
+The simulation's reproducibility is guaranteed by using a fixed random seed of 200 *(`set.seed(200)`)*. The results are saved in *`sim_10_results`* after the simulation is run for 100 separate games, each ending after 10 turns. The overall *average of the positions reached after 10 turns* for 100 game simulations is recorded in `<span style="color: DarkViolet; font-weight: bold;">sim_10_results_mean</span>`{=html}`\textcolor{violet}{\textbf{\texttt{sim\_10\_results\_mean}}}`{=latex} and the variance is saved in `<span style="color: DarkViolet; font-weight: bold;">sim_10_results_variance</span>`{=html}`\textcolor{violet}{\textbf{\texttt{sim\_10\_results\_variance}}}`{=latex}.
+
+The player begins each simulation at **position 0** and advances in accordance with the standard "Mountain Climb" rules: a fair six-sided die determines forward movement, **landing on a slippery square (multiples of 9)** causes a **random backward slide of 1, 2, or 3 spaces**, **landing on a climbing square (multiples of 16)** gives a **bonus forward jump of 5 spaces**.
+
+The average progress of the player under default rules is represented by the mean, whereas the variance represents the variability in progress due to the stochastic nature of the game. Consequently, the **mean** offers a ***practical approximation of the anticipated position following 10 turns***, while the **variance** illustrates the ***extent to which individual results differ from this anticipated value or mean***.
+
+The obtained results are:  
+
+- `<span style="color: DarkOrange; font-weight: bold;">Mean:</span>`{=html}`\textcolor{orange}{\textbf{Mean:}}`{=latex} 36.32 *(for a seed 200)*.
+
+- `<span style="color: DarkOrange; font-weight: bold;">Variance:</span>`{=html}`\textcolor{orange}{\textbf{Variance:}}`{=latex} 31.84 *(for a seed 200)*.
+
+### The following code chunk is for generating Fig. 3:  
+
+```{r fig.align='center', out.width = if (knitr::is_latex_output()) "0.7\\textwidth"}
+#converting turns_vector to dataframe for ggplot
+pos_df <- data.frame(positions = sim_10_results$positions)
+
+#ggplot histogram using no. of turns taken in each simulation
+ggplot(
+  pos_df,                                         #position vector df
+  aes(x = positions)                              #x-axis represents positions
+) +
+
+#plotting the histogram
+geom_histogram(
+  binwidth = diff(range(pos_df$positions)) / 10,  #20 histogram bins
+  fill = "yellowgreen",                           #fill colour
+  color = "black",                                #border colour
+  linewidth = 0.4                                 #outline thickness
+) +
+  
+#frequency on top of each bar
+stat_bin(
+binwidth = diff(range(pos_df$positions)) / 10,   #ensuring text labels correspond 
+                                                #exactly to the same bin 
+geom = "text",                                  #text labels instead of bars
+aes(label = after_stat(count)),                 #observation frequency each bin
+vjust = -0.3,                                   #labels slightly above each bar
+size = 4,                                       #size of the text labels
+color = "black"                                 #label colour
+) +
+
+#vertical dashed line for the mean no. of turns
+geom_vline(
+  xintercept = sim_10_results_mean,      #mean of no. of turn counts
+  linetype = "dashed",                #dashed line
+  linewidth = 0.8,                               
+  color = "#D62728"                              
+) +
+
+#annotate the mean value
+annotate(
+  "text",                                            #text annotation
+  x = sim_10_results_mean,                           #text at mean on x-axis
+  y = Inf,                                           #text at top of plot
+  label = paste("Mean turns =", sim_10_results_mean),#label text
+  vjust = 2,                                         #text slightly downwards 
+                                                     #to contain in frame
+  hjust = 1.1,                                       #text slightly left 
+                                                     #shifted for better readability
+  size = 4,                                      
+  color = "#D62728",                             
+  fontface = "bold"                              
+) +
+
+#plot appearance customization
+theme(
+  plot.title = element_text(               #title styling
+    size = 10,                             
+    face = "bold",                         #making bold
+    hjust = 0.5                            #centering
+  ),
+  axis.title.x = element_text(size = 11),  #X-axis title font size
+  axis.title.y = element_text(size = 11),  #Y-axis title font size
+  axis.text.x = element_text(size = 10),   #X-axis tick labels size
+  axis.text.y = element_text(size = 10)    #Y-axis tick labels size
+) +
+
+#adding plot title
+labs(
+  title = "Fig. 3: Distribution of Position Post 10 Turns Throughout 100 Simulations",
+                                          #main title
+  x = "Position",                         #x-axis label
+  y = "Frequency"                         #y-axis label
+)
+```
+
+Figure 3 displays the distribution of **player positions after 10 turns** throughout 100 independent simulations of the "Mountain Climb" game. The `<span style="color: DarkViolet; font-weight: bold; font-style: italic">mean position</span>`{=html}`\textcolor{violet}{\textbf{\textit{mean position}}}`{=latex} of the *10 turns* is approximately `<span style="color: DarkViolet; font-weight: bold;">36.32</span>`{=html}`\textcolor{violet}{\textbf{36.32}}`{=latex} as indicated by the vertical dashed `<span style="color: red; font-weight: bold;">red</span>`{=html}`\textcolor{red}{\textbf{red}}`{=latex} line, and the *tallest bar* sits **immediately around this value**, showing most simulations `<span style="color: DarkViolet; font-weight: bold;">cluster in the central region</span>`{=html}`\textcolor{violet}{\textbf{cluster in the central region}}`{=latex}. The frequency of the different states after 10 transitions per game simulation are represented by each of the bars, and the ***empirical estimate of the expected state at the 10th turn*** is represented by the mean.
+
+**Key Observations**
+
+- The distribution is `<span style="color: DarkViolet; font-weight: bold;">unimodal</span>`{=html}`\textcolor{violet}{\textbf{unimodal}}`{=latex} with a `<span style="color: DarkViolet; font-weight: bold;">slight left skew</span>`{=html}`\textcolor{violet}{\textbf{slight left skew}}`{=latex}. 
+
+- While most outcomes **cluster around the mean**, lying between `<span style="color: DarkViolet; font-weight: bold;">30 and 42, with tallest bar (freq ≈ 26)</span>`{=html}`\textcolor{violet}{\textbf{30 and 42, with tallest bar (freq $\approx$ 26)}}`{=latex} just above *mean*, a few simulations reach notably ***higher positions (up around 50)***, which forms a ***thinner right tail***.
+
+- Most of the simulated positions `<span style="color: DarkViolet; font-weight: bold;">fall between 30 and 42</span>`{=html}`\textcolor{violet}{\textbf{fall between 30 and 42}}`{=latex}, forming a ***clear central peak***. This suggests that *after 10 turns*, players typically advanced to the `<span style="color: DarkViolet; font-weight: bold; font-style: italic">mid-range of the board</span>`{=html}`\textcolor{violet}{\textbf{\textit{mid-range of the board}}}`{=latex}, well *below the summit at position 70* but far from the starting point.
+
+- **Lower-end positions** `<span style="color: DarkViolet; font-weight: bold;">(20 - 28)</span>`{=html}`\textcolor{violet}{\textbf{(20 - 28)}}`{=latex} occur in fewer simulations, indicating *slower early progress* in those games.
+
+- The overall range of positions `<span style="color: DarkViolet; font-weight: bold;">(≈19 to ≈50)</span>`{=html}`\textcolor{violet}{\textbf{($\approx$19 to $\approx$50)}}`{=latex} shows substantial variability after the same number of turns.
+
+**Reasons for the Observations**
+
+- `<span style="color: DarkOrange; font-weight: bold;">Higher than average</span>`{=html}`\textcolor{orange}{\textbf{Higher than average}}`{=latex} positions arise from:
+  - `<span style="color: DarkViolet; font-weight: bold;">early rolls were favourable</span>`{=html}`\textcolor{violet}{\textbf{early rolls were favourable}}`{=latex} or
+  - `<span style="color: DarkViolet; font-weight: bold;">landing on climbing squares</span>`{=html}`\textcolor{violet}{\textbf{landing on climbing squares}}`{=latex} provided additional movement
+  
+- `<span style="color: DarkOrange; font-weight: bold;">Higher than average</span>`{=html}`\textcolor{orange}{\textbf{Lower than average}}`{=latex} positions arise from:
+  - `<span style="color: DarkViolet; font-weight: bold;">landing on slippery squares</span>`{=html}`\textcolor{violet}{\textbf{landing on slippery squares}}`{=latex} frequently,
+  - resulting in **backward movement** slowing overall progress.
+  
+Together, these effects create the distribution seen in the figure; centred around the mean, but with clear variation driven by the game's stochastic movement and special square mechanisms. 
+
+### `<span style="color: blue;">Answer 4.2</span>`{=html}`\textcolor{blue}{Answer 4.2}`{=latex}
+To evaluate the impact of the change of parameters on short-term outcomes the similar function **`simulate_pos_at()`**, is invoked with *`(set.seed(200))`* for reproducibility, and changes made to the following parameters:
+
+- `<span style="color: DarkViolet; font-weight: bold;">slip_back_range</span>`{=html}`\textcolor{violet}{\textbf{slip\_back\_range}}`{=latex} set to **4:8** from the default *1:3*, representing a stricter slipping rule, and
+
+- `<span style="color: DarkViolet; font-weight: bold;">climb_up_amount</span>`{=html}`\textcolor{violet}{\textbf{climb\_up\_amount}}`{=latex} reduced to **2** from the default *5*, representing a less generous climbing bonus.
+
+This adjustment indicates that player landing on a slippery square (multiples of 9), now slide back `<span style="color: DarkViolet; font-weight: bold;">4 to 8</span>`{=html}`\textcolor{violet}{\textbf{4 to 8}}`{=latex} positions rather than the original *1 to 3* positions. Also when a player lands on a climbing square (multiple of 16), now jumps `<span style="color: DarkViolet; font-weight: bold;">2</span>`{=html}`\textcolor{violet}{\textbf{2}}`{=latex} positions rather than the original *5* positions.
+
+```{r}
+set.seed(200)                          #for reproducibility
+n_simulations = 100                    #defining total no. of simulations to run
+n_turns = 10                           #turn after which to stop
+
+#setting new slip_back_range & climb_up_amount
+slip_back_range = 4:8                  #player slides back by 4 to 8 positions       
+climb_up_amount = 2                    #player climbs +2 positions
+
+#simulating the game with new parameters
+sim_10_results_new <- simulate_pos_at(n_simulations = n_simulations, 
+                                      n_turns = n_turns, 
+                                      slip_back_range = slip_back_range, 
+                                      climb_up_amount = climb_up_amount
+                                      )       
+
+#position reached after 10 turns on average
+sim_10_results_mean_new <- sim_10_results_new$mean
+paste("The position reached after 10 turns on average i.e. mean for new parameters =", 
+      sim_10_results_mean_new)
+
+#variance of the positions reached after 10 turns
+#measures the spread of final positions
+sim_10_results_variance_new <- sim_10_results_new$variance
+paste("The variance for new parameters=", round(sim_10_results_variance_new, 2))
+```
+
+### **Effect on Average Position Reached Post 10 Turns**  
+
+Changing the slipping and climbing rules has a clear impact on how players progress in the first 10 turns. Based on the default values, the players typically reached *mid 30s* after the *initial 10 turns*, but on the other hand when the **slip back range** is *increased* from `<span style="color: DarkViolet; font-weight: bold;">1-3 to 4-8</span>`{=html}`\textcolor{violet}{\textbf{1-3 to 4-8}}`{=latex} and the jumping bonus or the **climbing bonus** is *reduced* from `<span style="color: DarkViolet; font-weight: bold;">+5 to +2</span>`{=html}`\textcolor{violet}{\textbf{+5 to +2}}`{=latex}, the ***average position reached*** after 10 turns *decreases* and that occurs as the game introduces `<span style="color: DarkViolet; font-weight: bold; font-style: italic">larger backward movements (penalties)</span>`{=html}`\textcolor{violet}{\textbf{\textit{larger backward movements (penalties)}}}`{=latex} and `<span style="color: DarkViolet; font-weight: bold; font-style: italic">smaller forward reward</span>`{=html}`\textcolor{violet}{\textbf{\textit{smaller forward reward}}}`{=latex} reducing the overall net forward progress.
+
+
+These drops the average position (mean) to `<span style="color: DarkViolet; font-weight: bold;">29.88 from 36.32</span>`{=html}`\textcolor{violet}{\textbf{29.88 from 36.32}}`{=latex} throughout 100 game simulations, as by *strengthening the penalty on slippery squares* and *reducing reward on climbing squares*, the player makes *less progress* post same number of turns on the board. Thus, we `<span style="color: DarkViolet; font-weight: bold;">shift the distribution</span>`{=html}`\textcolor{violet}{\textbf{shift the distribution}}`{=latex} of positions to the `<span style="color: DarkViolet; font-weight: bold;">left</span>`{=html}`\textcolor{violet}{\textbf{left}}`{=latex} and also decrease the expected position at turn 10.
+
+**Why the mean decreases**
+
+- `<span style="color: DarkOrange; font-weight: bold;">Larger negative jumps</span>`{=html}`\textcolor{orange}{\textbf{Larger negative jumps}}`{=latex} increase expected backward movement per turn.  
+Under the new rule, landing on a slippery square produces a ***mean backward movement*** of:
+  - `<span style="color: DarkViolet; font-weight: bold;">old rule:</span>`{=html}`\textcolor{violet}{\textbf{old rule:}}`{=latex} **\(E[\text{slip}] = 2\)**
+  - `<span style="color: DarkViolet; font-weight: bold;">new rule:</span>`{=html}`\textcolor{violet}{\textbf{new rule:}}`{=latex} **\(E[\text{slip}] = 6\)**  
+  This *tripling* of the expected backward penalty shifts the overall distribution of positions *downward*.
+
+- `<span style="color: DarkOrange; font-weight: bold;">Reduced climb reward</span>`{=html}`\textcolor{orange}{\textbf{Reduced climb reward}}`{=latex} lowers the expected forward gain.  
+The climb bonus *drops* from **+5 to +2**, meaning the *positive offset* that previously *counteracted the slips* is now much *weaker*.
+
+  - `<span style="color: DarkViolet; font-weight: bold;">old expected gain:</span>`{=html}`\textcolor{violet}{\textbf{old expected gain:}}`{=latex} +5
+  - `<span style="color: DarkViolet; font-weight: bold;">new expected gain:</span>`{=html}`\textcolor{violet}{\textbf{new expected gain:}}`{=latex} +2  
+  This results in a much weaker forward reward.
+
+- `<span style="color: DarkOrange; font-weight: bold;">Net expected movement</span>`{=html}`\textcolor{orange}{\textbf{Net expected movement}}`{=latex} per turn becomes smaller.  
+Because negative movements become stronger and positive movements weaker, the expected *step size* in the Markov chain *decreases*. This lowers the mean of the position distribution after a fixed number of turns (here 10).
+
+The adjustments collectively decrease the anticipated net forward movement with each turn, causing the Markov chain to be biased towards lower states. Over 10 turns, this influence compounds, leading to a decreased average position and a histogram that *shifts to the left*. 
+
+### The following code chunk is for generating Fig. 4:  
+
+```{r fig.align='center', out.width = if (knitr::is_latex_output()) "0.7\\textwidth"}
+#converting turns_vector to dataframe for ggplot
+pos_df_new <- data.frame(positions = sim_10_results_new$positions)
+
+#calculating max y
+# compute histogram info (without plotting)
+hist_info <- hist(pos_df_new$positions, breaks = seq(min(pos_df_new$positions),
+                                                     max(pos_df_new$positions),
+                                  by = diff(range(pos_df_new$positions)) / 10),
+                  plot = FALSE)
+
+max_y <- max(hist_info$counts) + 1
+
+#ggplot histogram using no. of turns taken in each simulation
+ggplot(
+  pos_df_new,                                         #position vector df
+  aes(x = positions)                                  #x-axis for positions
+) +
+
+#plotting the histogram
+geom_histogram(
+  binwidth = diff(range(pos_df_new$positions)) / 10,  #20 histogram bins
+  fill = "yellowgreen",                               #fill colour
+  color = "black",                                    #border colour
+  linewidth = 0.4                                     #outline thickness
+) +
+  
+#frequency on top of each bar
+stat_bin(
+binwidth = diff(range(pos_df_new$positions)) / 10,    #ensuring text labels 
+                                                      #correspond exactly to 
+                                                      #the same bin 
+geom = "text",                                  #text labels instead of bars
+aes(label = after_stat(count)),                 #observation frequency each bin
+vjust = -0.3,                                   #labels slightly above each bar
+size = 4,                                       #size of the text labels
+color = "black"                                 #label colour
+) +
+
+#vertical dashed line for the mean no. of turns
+geom_vline(
+  xintercept = sim_10_results_mean_new,      #mean of no. of turn counts
+  linetype = "dashed",                #dashed line
+  linewidth = 0.8,                               
+  color = "#D62728"                              
+) +
+
+#annotate the mean value
+annotate(
+  "text",                                            #text annotation
+  x = sim_10_results_mean_new,                           #text at mean on x-axis
+  y = Inf,                                           #text at top of plot
+  label = paste("Mean turns =", sim_10_results_mean_new),    #label text
+  vjust = 2,                                         #text slightly downwards 
+                                                     #to contain in frame
+  hjust = 1.1,                                       #text slightly left shift 
+                                                     #for better readability
+  size = 4,                                      
+  color = "#D62728",                             
+  fontface = "bold"                              
+) +
+  
+#setting limits for y-axis
+ylim(0, max_y) +
+
+#plot appearance customization
+theme(
+  plot.title = element_text(               #title styling
+    size = 10,                             
+    face = "bold",                         #making bold
+    hjust = 0.5                            #centering
+  ),
+  axis.title.x = element_text(size = 11),  #X-axis title font size
+  axis.title.y = element_text(size = 11),  #Y-axis title font size
+  axis.text.x = element_text(size = 10),   #X-axis tick labels size
+  axis.text.y = element_text(size = 10)    #Y-axis tick labels size
+) +
+
+#adding plot title
+labs(
+  title = "Fig. 4: Distribution of Position Post 10 Turns Throughout 100 Simulations (changed rules)",
+                                          #main title
+  x = "Position",                         #x-axis label
+  y = "Frequency"                         #y-axis label
+)
+```
+
+To facilitate the visual analysis of the simulation outcomes with modified rules, a histogram was created (Fig. 4) that illustrates the distribution of player positions following 10 turns across 100 simulated games. The x-axis indicates the positions attained at the conclusion of the 10th turn, while the y-axis shows how often each position occurs. The vertical dashed line represents the mean position after 10 turns across all 100 games, which is around 29.88, emphasizing the central tendency of the distribution. This value reflects the average advancement a player achieves after 10 turns under the modified rules.
+
+**Each position** on the board represents a **state**, with **each die roll** leading to a **random transition**. Altering the slip-back range and the climb bonus, affects the ***transition probabilities*** among states. The adjusted rules enhance both the likelihood and extent of transitions to lower states, while diminishing the chances of upward movement. Consequently, the anticipated state of the chain after 10 transitions is lower, which is evident in both the diminished mean and the altered histogram.
+
+### The following code chunk is for generating Fig. 5:  
+
+```{r fig.width=10, fig.align='center'}
+#combining the two position vectors into one data frame
+pos_combined <- bind_rows(
+  data.frame(
+    positions = sim_10_results$positions,
+    scenario  = "Original rules"
+  ),
+  data.frame(
+    positions = sim_10_results_new$positions,
+    scenario  = "Changed rules"
+  )
+)
+
+#common binwidth across both scenarios
+bw <- diff(range(pos_combined$positions)) / 10
+
+#mean position per scenario (for vline + labels)
+mean_df <- pos_combined %>%
+  group_by(scenario) %>%
+  summarise(
+    mean_pos = mean(positions),
+    .groups  = "drop"
+  )
+
+#Facetted histogram based on scenario
+ggplot(
+  pos_combined,
+  aes(x = positions)
+) +
+  #histogram
+  geom_histogram(
+    binwidth = bw,
+    fill     = "yellowgreen",
+    color    = "black",
+    linewidth = 0.4
+  ) +
+  
+  #frequency labels on top of bars
+  stat_bin(
+    binwidth = bw,
+    geom = "text",
+    aes(label = after_stat(count)),
+    vjust = -0.3,          #vertical position
+    size = 4,
+    color = "black") +
+  
+  #vertical dashed line for mean per scenario
+  geom_vline(
+    data = mean_df,
+    aes(xintercept = mean_pos),
+    linetype = "dashed",
+    linewidth = 0.8,
+    color = "#D62728") +
+  
+  #annotate mean text per scenario
+  geom_text(
+    data = mean_df,
+    aes(x = mean_pos,
+      y = Inf,
+      label = paste("Mean position =", mean_pos)),
+    vjust = 3,                               #vertical position
+    hjust = 1.1,                             #horizontal position
+    size  = 4,
+    color = "#D62728",
+    fontface = "bold") +
+  
+  #facets: one panel per scenario
+  facet_wrap(~ scenario, scales = "free_y") +
+  
+  #plot appearance
+  theme(
+    plot.title  = element_text(size = 10, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 11),
+    axis.title.y = element_text(size = 11),
+    axis.text.x  = element_text(size = 10),
+    axis.text.y  = element_text(size = 10)
+  ) +
+  
+  #title and axis labels
+  labs(
+    title = "Fig. 5: Comparison of Distribution of Position Post 10 Turns Throughout 100 Simulations",
+    x     = "Position",
+    y     = "Frequency"
+  )
+```
+
+A side by side comparison of the distribution of positions for the *changed rules* and the *original rules* is presented in Fig. 5. From the figure, it is evident that the distribution `<span style="color: DarkViolet; font-weight: bold;">shifts towards left</span>`{=html}`\textcolor{violet}{\textbf{shifts towards left}}`{=latex} in application of the changed rules.
+
+**Why the distribution shifts left**
+
+- `<span style="color: DarkOrange; font-weight: bold;">More trajectories accumulate at lower positions.</span>`{=html}`\textcolor{orange}{\textbf{More trajectories accumulate at lower positions.}}`{=latex}  
+Large backward jumps cause many simulations to fall behind early, and the smaller climb reward makes recovery slower.
+
+- `<span style="color: DarkOrange; font-weight: bold;">Upper-tail values become rarer.</span>`{=html}`\textcolor{orange}{\textbf{Upper-tail values become rarer.}}`{=latex}  
+With weaker climbing boosts, `<span style="color: DarkViolet; font-weight: bold; font-style: italic;">fewer simulations can advance far by turn 10</span>`{=html}`\textcolor{violet}{\textbf{\textit{fewer simulations can advance far by turn 10}}}`{=latex}, reducing the frequency of high-end positions (e.g., > 40).
+
+- `<span style="color: DarkOrange; font-weight: bold;">Variability increases slightly.</span>`{=html}`\textcolor{orange}{\textbf{Variability increases slightly.}}`{=latex}  
+Larger slips create greater spread in downward movement, which `<span style="color: DarkViolet; font-weight: bold;">widens the left side</span>`{=html}`\textcolor{violet}{\textbf{widens the left side}}`{=latex} of the distribution, while `<span style="color: DarkViolet; font-weight: bold;">encompasses the right tail</span>`{=html}`\textcolor{violet}{\textbf{encompasses the right tail}}`{=latex}.
+
+**Overall Effect**  
+
+- The mean position after 10 turns decreases.  
+- The distribution ***shifts left***, with more simulations ending in lower ranges.  
+- The game becomes more `<span style="color: DarkViolet; font-weight: bold;">'loss-heavy'</span>`{=html}`\textcolor{violet}{\textbf{'loss-heavy'}}`{=latex} where backward movement dominates forward progress.  
+
+# 2 Data Analysis
+For this part of the coursework you will need the data file (assess_data_1225.Rdata), instructions to download the file can be found on the course canvas page. This file contains a single data frame with the following 9 variables:
+
+- `idx`: the index of the patient
+- `age`: the age of the patient
+- `bai`: the body area index of the patient
+- `bmi`: the body mass index of the patient
+- `body_fat`: the body fat of the patient
+- `density`: the density of the patient
+- `weight`: the weight of the patient
+- `height`: the height of the patient
+- `sex`: the sex of the patient
+
+You will perform the analysis in two steps, first you will look at the data to identify any problems with the data followed by a regression based analysis of the data. This is a data analysis exercise and you will be expected to comment on the results of your analysis and plots you produce.
+
+## `<span style="color: blue;">Q5</span>`{=html}`\textcolor{blue}{Q5}`{=latex}
+Study the following code example and add comments to describe what each line of the code does. Also identify any mistakes in the code and comment on how to fix them. `<span style="color: DarkOrange; font-weight: bold">[4 MARKS]</span>`{=html}`\textcolor{orange}{\textbf{[4 MARKS]}}`{=latex}
+
+*Note, do not change the code before commenting*
+
+``` r
+load("data/assess_data_1225.Rdata")
+
+dens_m <- density(bmi_data$bmi[bmi_data$sex == "male"])
+dens_f <- density(bmi_data$bmi[bmi_data$sex == "female"])
+plot(dens_f, col = "green")
+lines(dens_m)
+
+idx  <- 1:200
+
+pca_res <- prcomp(bmi_data[idx, -c(1, 9)], center = TRUE, scale = TRUE)
+plot(pca_res$x[, 1], pca_res$x[, 2], col = "blue", pch = 19)
+
+out <- lm(bmi[idx] ~ age[idx])
+summary(out)
+p_val <- summary(out)$coefficients[2, 4]
+```
+
+### `<span style="color: blue;">Answer 5</span>`{=html}`\textcolor{blue}{Answer 5}`{=latex}
+**The fully commented version of the above code is presented below:**
+
+```{r eval=FALSE}
+#load the 'assess_data_1225' Rdata file from data directory in current R session
+#all objects in the Rdata file become available in the workspace
+load("data/assess_data_1225.Rdata")
+
+#subset: select rows where "sex" is "male" from "bmi_data" dataframe 
+#take "bmi" column from those rows
+#compute kernel density estimate of BMI values for males only
+#store the density object in "dens_m"
+dens_m <- density(bmi_data$bmi[bmi_data$sex == "male"])
+
+#subset: select rows where "sex" is "female" from "bmi_data" dataframe 
+#take "bmi" column from those rows
+#compute kernel density estimate of BMI values for females only
+#store the density object in "dens_f"
+dens_f <- density(bmi_data$bmi[bmi_data$sex == "female"])
+
+#plot the female BMI density curve in green
+plot(dens_f, col = "green")
+
+#add the male BMI density curve to the existing plot, default colour (black)
+lines(dens_m)
+
+#create an index vector with integers from 1 to 200
+#use for subsetting the first 200 observations of 'bmi_data'
+idx  <- 1:200
+
+#perform Principal component analysis (PCA) on a subset of columns of 'bmi_data'
+#uses only rows specified by idx i.e. first 200 observations
+#removes column 1 (idx) and 9 (sex) to keep numeric variables
+#center = TRUE: subtract mean from each variable to ensure a mean-centered data
+#scale = TRUE: scale variables to unit variance, 
+#which preventing larger units from dominating
+pca_res <- prcomp(bmi_data[idx, -c(1, 9)], center = TRUE, scale = TRUE)
+
+#scatter plot with scores of first two principal components (PC1 vs PC2)
+#pca_res$x contains PCA scores for each observation
+#points are solid circle (pch = 19) in blue colour (col = "blue")
+plot(pca_res$x[, 1], pca_res$x[, 2], col = "blue", pch = 19)
+
+#fit a simple linear regression model on 'bmi' and 'age'
+#'bmi' acts as response variable, 'age' as explanatory variable
+#use only first 200 observations (idx)
+out <- lm(bmi[idx] ~ age[idx])
+
+#summary of the fitted linear model
+#shows coefficient estimates, p-values, and model diagonistics
+summary(out)
+
+#extract the p-value of the age coefficient from model summary
+#summary(out)$coefficients is a matrix: 
+#rows = (Intercept), age; cols = Estimate, Std. Error, t value, Pr(>|t|)
+#[2, 4] selects p-value in row 2 (age), column 4 (Pr(>|t|))
+p_val <- summary(out)$coefficients[2, 4]
+```
+
+**Mistakes/Assumptations and how to fix them:**
+
+1. `<span style="color: DarkOrange; font-weight: bold;">Undefined 'bmi_data' after load()</span>`{=html}`\textcolor{orange}{\textbf{Undefined 'bmi\_data' after load()}}`{=latex} 
+
+- Code uses the object **`bmi_data`**, which is never explicitly created.
+- It  `<span style="color: green; font-weight: bold; font-style: italic">assumes</span>`{=html}`\textcolor{OliveGreen}{\textbf{\textit{assumes}}}`{=latex} that **`load("data/assess_data_1225.Rdata")`** creates an object called **`bmi_data`**, meaning *`assess_data_1225.Rdata`* contains a dataframe named **`bmi_data`**, which is not guranteed.  
+
+- `<span style="color: DarkViolet; font-weight: bold;">Fix:</span>`{=html}`\textcolor{violet}{\textbf{Fix:}}`{=latex} Check the name of the object loaded from Rdata using **`ls()`**, and assign correct dataframe name.
+
+2. `<span style="color: DarkOrange; font-weight: bold;">Assumption about 'sex' labels ("male"/"female")</span>`{=html}`\textcolor{orange}{\textbf{Assumption about 'sex' labels ("male"/"female")}}`{=latex}  
+
+- The code `<span style="color: green; font-weight: bold; font-style: italic">assumes</span>`{=html}`\textcolor{OliveGreen}{\textbf{\textit{assumes}}}`{=latex} that **`bmi_data$sex`** is coded using exact character strings *'male'* and *'female'* while calculating *`dens_m, dens_f`*.  
+
+- If the labels differ (e.g. **'M'**, **'F'**), the subsetting would fail or return empty vectors, which will cause error in *`density()`*.
+
+- `<span style="color: DarkViolet; font-weight: bold;">Fix:</span>`{=html}`\textcolor{violet}{\textbf{Fix:}}`{=latex} Before calling *`density()`*, **`table(bmi_data$sex)`** should be used to check the coding of **`sex`** variable.
+
+3. `<span style="color: DarkOrange; font-weight: bold;">Hard-coded row indexing (idx <- 1:200)</span>`{=html}`\textcolor{orange}{\textbf{Hard-coded row indexing (idx <- 1:200)}}`{=latex}
+
+- The code `<span style="color: green; font-weight: bold; font-style: italic">assumes</span>`{=html}`\textcolor{OliveGreen}{\textbf{\textit{assumes}}}`{=latex} **`bmi_data`** has **atleast 200 rows**; otherwise *idx <- 1:200* will result in an error.
+
+- If **`bmi_data`** has more than 200 rows, then only the first 200 are selected, which might cause data loss in subsequent steps.
+
+- `<span style="color: DarkViolet; font-weight: bold;">Fix:</span>`{=html}`\textcolor{violet}{\textbf{Fix:}}`{=latex} Index should be **dynamically defined** based on the number of rows using **`idx <- seq_len(nrow(bmi_data))`**.
+
+4. `<span style="color: DarkOrange; font-weight: bold;">Column position assumption for PCA [-c(1, 9)]</span>`{=html}`\textcolor{orange}{\textbf{Column position assumption for PCA [-c(1, 9)]}}`{=latex}
+
+- The code `<span style="color: green; font-weight: bold; font-style: italic">assumes</span>`{=html}`\textcolor{OliveGreen}{\textbf{\textit{assumes}}}`{=latex} that:
+  - There is a 9th column, and
+  - all remaining columns are numeric.
+  
+- PCA requires only numeric values; if there are any *non-numeric columns*, **`prcomp()`** will fail.
+
+- `<span style="color: DarkViolet; font-weight: bold;">Fix:</span>`{=html}`\textcolor{violet}{\textbf{Fix:}}`{=latex} All the column names should be checked using **`colnames(bmi_data)`**, before calling **`prcomp()`**, to ensure correct application of *column indices to exclude*.
+
+5. `<span style="color: DarkOrange; font-weight: bold;">Incorrect variavle referencing in regression model (lm(bmi[idx] ~ age[idx])</span>`{=html}`\textcolor{orange}{\textbf{Incorrect variavle referencing in regression model (lm(bmi[idx] $\sim$ age[idx])}}`{=latex}
+
+- The code `<span style="color: red; font-weight: bold; font-style: italic">incorrectly</span>`{=html}`\textcolor{red}{\textbf{\textit{incorrectly}}}`{=latex} references **`bmi`** and **`age`** as standalone objects in **`lm(bmi[idx] ~ age[idx])`**, though **`bmi`** and **`age`** are never defined as separate vectors.
+
+- The datas are in **`bmi_data`** dataset in **`bmi_data$bmi`** and **`bmi_data$age`**.
+
+- This will throw `<span style="color: red; font-weight: bold;">Error in eval(predvars, data, env) : object 'bmi' not found</span>`{=html}`\textcolor{red}{\textbf{Error in eval(predvars, data, env) : object 'bmi' not found}}`{=latex}.
+
+- `<span style="color: DarkViolet; font-weight: bold;">Fix:</span>`{=html}`\textcolor{violet}{\textbf{Fix:}}`{=latex} **`bmi`** and **`age`** needs to be referenced through the **`bmi_data`** using **`bmi_data$bmi`** and **`bmi_data$age`**
+
+**Poor Presentation Choices and how to fix them:**
+
+6. `<span style="color: DarkOrange; font-weight: bold;">No legend/weak plot labelling</span>`{=html}`\textcolor{orange}{\textbf{No legend/weak plot labelling}}`{=latex}
+
+- No legend specified for **BMI density** plot making it hard to interpret, which sex is represented by which curve.
+
+- Also plot title and x-labels are not comprehensible. Though **not a programming error** it reduces clarity.
+
+- `<span style="color: DarkViolet; font-weight: bold;">Fix:</span>`{=html}`\textcolor{violet}{\textbf{Fix:}}`{=latex} Add proper labels and title and a legend. Also use separate colour for each *sex* and mention it.
+
+7. `<span style="color: DarkOrange; font-weight: bold;">No title/axis label in PCA plot</span>`{=html}`\textcolor{orange}{\textbf{No title/axis label in PCA plot}}`{=latex}
+
+- No proper labels for **x** and **y** axes in the PCA plot. Also no title provided.
+
+- Though **not a programming error** it reduces clarity.
+
+- `<span style="color: DarkViolet; font-weight: bold;">Fix:</span>`{=html}`\textcolor{violet}{\textbf{Fix:}}`{=latex} Add proper labels (PC1 and PC2) and title and a legend.
+
+**The corrected code is presented below:**
+
+```{r fig.align='center', out.width = if (knitr::is_latex_output()) "0.8\\textwidth"}
+#load the 'assess_data_1225' Rdata file from data directory in current R session
+load("data/assess_data_1225.Rdata")
+
+#all the objects available in the workspace  
+ls()
+
+#expected object assignment to correct variable
+bmi_data <- bmi_data
+
+#frequency table of sex variable
+table(bmi_data$sex)
+
+#compute kernel density estimate of BMI values for males only
+#remove na values
+dens_m <- density(bmi_data$bmi[bmi_data$sex == "male"], na.rm = TRUE)
+#compute kernel density estimate of BMI values for females only
+#remove na values
+dens_f <- density(bmi_data$bmi[bmi_data$sex == "female"], na.rm = TRUE)
+
+
+#plot the female BMI density curve in green
+plot(dens_f,
+     col = "green",                               #green curve
+     lwd = 2,                                     #line-width 2
+     main = "Body Mass Index (BMI) Density Distribution by Sex", 
+                                                  #title
+     xlab = "BMI",                                #x label
+     ylab = "Estimated Density")                  #y label
+
+#add the male BMI density curve to the existing 
+lines(dens_m, col = "blue", lwd = 2)                       #blue curve, line-width 2
+#adding the legend
+legend("topright",                                #legend position
+       legend = c("Female", "Male"),              #legend by sex
+       col = c("green", "blue"),                  #legend colours
+       lwd = 2,                                   #line-width 2
+       bty = "n")                                 #no legend box
+
+
+#create dynamic index based on data size
+idx <- seq_len(nrow(bmi_data))
+
+#column names of the dataset
+colnames(bmi_data)
+
+#PCA using numeric variables only
+pca_res <- prcomp(
+  bmi_data[idx, -c(1, 9)],         #all observation selected except non-numeric
+                                   #and unnecessary columns (idx and sex)
+  center = TRUE,                   #ensure a mean-centered data
+  scale = TRUE                     #scale variables to unit variance
+)
+
+#scatter plot with scores of first two principal components (PC1 vs PC2)
+plot(pca_res$x[, 1],               #PC1 scores
+     pca_res$x[, 2],               #PC2 scores
+     col = adjustcolor("blue", alpha.f = 0.5),                
+                            #semi-transparent blue points to reduce overplotting
+     
+     pch = 19,                     #solid circles
+     xlab = "PC1",                 #x label
+     ylab = "PC2",                 #y label
+     main = "Principal Component Analysis (PCA) of bmi_data")  #title
+                                   
+#fit a simple linear regression model on 'bmi' and 'age'
+#corrected referencing
+out <- lm(bmi_data$bmi[idx] ~ bmi_data$age[idx])
+
+#summary of the fitted linear model
+summary(out)
+
+#extract the p-value of the age coefficient from model summary
+p_val <- summary(out)$coefficients[2, 4]
+```
+
+# 2.1 Data Exploration 
+## `<span style="color: blue;">Q6</span>`{=html}`\textcolor{blue}{Q6}`{=latex} Quality Control
+Using the data provided, perform a quality control check of the dataset. Verify that the bmi values are reasonable by comparing the mean BMI for male and female patients, which should each fall between 20 and 30. If you detect any issues (for example, implausible BMI values or incorrect calculations), describe the problem, correct it, and confirm that the corrected data now fall within the expected range. Support your analysis with at least one plot (e.g. histogram or boxplot) and provide a brief summary table of the cleaned data used for further analysis.
+
+Next, perform a Principal Component Analysis (PCA) using the cleaned numeric variables to assess overall data consistency and identify potential outliers. Produce a PCA plot (PC1 vs PC2) to visualise any unusual samples, describe your approach to detecting and removing outliers, and briefly comment on how this step improves the quality of the dataset for subsequent analysis.
+
+Create a function to remove outliers based on your PCA results as well any recalculations for BMI and apply it to the dataset.
+
+- Function name: `update_bmi`
+- Arguments: `data` (data frame)
+- Returns: `data` (data frame) cleaned data frame without outliers   
+`<span style="color: DarkOrange; font-weight: bold">[5 MARKS]</span>`{=html}`\textcolor{orange}{\textbf{[5 MARKS]}}`{=latex}
+
+### `<span style="color: blue;">Answer 6</span>`{=html}`\textcolor{blue}{Answer 6}`{=latex}
+
+**1. Loading Data:**  
+The dataset is loaded into the current R session from `assess_data_1225.Rdata` to inspect for all the potential data types, structure of variables and dataset, and look for completeness.
+
+```{r}
+#load the 'assess_data_1225' Rdata file from data directory in current R session
+load("data/assess_data_1225.Rdata")
+
+#all the objects available in the workspace  
+ls()
+
+#expected object assignment to correct variable
+bmi_data <- bmi_data
+
+#structure of dataset
+str(bmi_data)      #dataset internal structure
+summary(bmi_data)  #dataset summary statistics
+```
+
+This showed the presence of all the 9 variables mentioned in the question, which includes both numeric and categorical data, along with giving a identification of the data types. Also it gave an indication of `<span style="color: DarkViolet; font-weight: bold; font-style: italic">implausible BMI values</span>`{=html}`\textcolor{violet}{\textbf{\textit{implausible BMI values}}}`{=latex}, which are `<span style="color: DarkViolet; font-weight: bold; font-style: italic">mostly above 100</span>`{=html}`\textcolor{violet}{\textbf{\textit{mostly above 100}}}`{=latex}, whereas `<span style="color: DarkViolet; font-weight: bold; font-style: italic">biologically 100 is the maximum</span>`{=html}`\textcolor{violet}{\textbf{\textit{biologically 100 is the maximum}}}`{=latex} possible BMI.
+
+**2. BMI (Body Mass Index) Value Verification:**     
+To ensure and verify that the BMI values are reasonable and plausible, the **mean BMI** is calculated for male and female patients separately. As the question mentioned and as per the accepted guidelines, each of the mean, i.e. the `<span style="color: DarkViolet; font-weight: bold; font-style: italic">average BMI values should fall between 20 and 30</span>`{=html}`\textcolor{violet}{\textbf{\textit{average BMI values should fall between 20 and 30}}}`{=latex}.
+
+```{r}
+#mean BMI calculation for male and female separately
+#using aggregate() function, which compute a group summary for numeric variables
+
+mean_bmi_sex <- aggregate(
+  bmi ~ sex,                 #response variable: bmi; group by:sex
+  data = bmi_data,          #use bmi_data frame
+  mean,                     #apply mean function
+  na.rm = TRUE              #remove na values from bmi col
+)
+
+#show mean BMI values
+mean_bmi_sex
+```
+
+**Detected Issues:**     
+
+Upon examination, it becomes evident that the bmi values for both the genders are `<span style="color: DarkViolet; font-weight: bold; font-style: italic">significantly higher</span>`{=html}`\textcolor{violet}{\textbf{\textit{significantly higher}}}`{=latex} significantly higher than the anticipated `<span style="color: DarkViolet; font-weight: bold; font-style: italic">biological range of (20 to 30)</span>`{=html}`\textcolor{violet}{\textbf{\textit{biological range of (20 to 30)}}}`{=latex}, with results showing mean of `<span style="color: DarkViolet; font-weight: bold;">171.5653 for male</span>`{=html}`\textcolor{violet}{\textbf{171.5653 for male}}`{=latex} and `<span style="color: DarkViolet; font-weight: bold;">155.1213 for female</span>`{=html}`\textcolor{violet}{\textbf{155.1213 for female}}`{=latex}, with some values exceeding 300, as evident from the box-plot (Fig. 6). These figures are **not biologically realistic** and point to a serious **issue with data quality**. This strongly implies that `<span style="color: DarkViolet; font-weight: bold;">BMI calculations have been performed incorrectly</span>`{=html}`\textcolor{violet}{\textbf{BMI calculations have been performed incorrectly}}`{=latex}, likely due to a `<span style="color: DarkViolet; font-weight: bold;">discrepancy in measurement units (for instance, height measured in centimeters instead of meters)</span>`{=html}`\textcolor{violet}{\textbf{discrepancy in measurement units (for instance, height measured in centimeters instead of meters)}}`{=latex}, rather than indicating an actual physiological condition.
+
+The error in data entry may be considered as the most common reason, including `<span style="color: DarkViolet; font-weight: bold;">errors in decimal placement</span>`{=html}`\textcolor{violet}{\textbf{errors in decimal placement}}`{=latex}, `<span style="color: DarkViolet; font-weight: bold;">conversion mistakes between units</span>`{=html}`\textcolor{violet}{\textbf{conversion mistakes between units}}`{=latex}, typographical errors in single-digit figures, and issues arising from transcription. Alternatively, there may be problems related to data quality and validation, such as **incomplete data context** `<span style="color: DarkViolet; font-weight: bold;">(for instance, if height and weight were recorded on different days, or if one value is reported by the individual while the other is measured clinically)</span>`{=html}`\textcolor{violet}{\textbf{(for instance, if height and weight were recorded on different days, or if one value is reported by the individual while the other is measured clinically)}}`{=latex}, as well as a lack of plausibility checks (the system may fail to identify "biologically implausible values"), which permits inaccurate data to be included in the analysis.
+
+The observation is also backed by the box-plot for the bmi values for both male and female as given below.
+
+### The following code chunk is for generating Fig. 6:  
+
+```{r fig.height=5, fig.align='center', out.width = if (knitr::is_latex_output()) "0.8\\textwidth"}
+#using ggplot for the boxplot of bmi from bmi_data 
+ggplot(data = bmi_data,               #using bmi_data dataframe
+       aes(x = sex,
+           y = bmi,
+           fill = sex)) +             #fill based on sex
+  geom_boxplot(alpha = 0.7,               #semi-transparent outliers
+               outlier.shape = 1,         #hollow point
+               outlier.colour = NULL,
+               outlier.size = 3) +         
+  
+  #plotting the mean bmi points for each sex
+  geom_point(data = mean_bmi_sex,     #use the mean calculated from aggregate()
+             aes(x = sex,
+                 y = bmi),
+             color = "black",             #black border
+             fill = "#D62728",            #fill red
+             size = 3,
+             shape = 21,                  #fill point with border
+             show.legend = FALSE) +       #don't add point to legend
+  
+  #mean labels
+  geom_text(data = mean_bmi_sex,
+             aes(x = sex, 
+                y = bmi, 
+                label = paste("Mean BMI = ", round(bmi, 2))), #round to 2 places
+             color = "#D62728",
+             fontface = "bold",
+             vjust = -2,                  #vertical position
+             size = 4) +
+  
+  #manually select the colours for the fill
+  scale_fill_manual(values = c("female" = "pink", 
+                               "male" = "lightblue")) +   
+  #y-ticks every 50
+  scale_y_continuous(
+    breaks = seq(0, max(bmi_data$bmi, na.rm = TRUE), by = 50)) +
+  
+  #plot appearance
+  theme(
+    plot.title  = element_text(size = 10, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 11),
+    axis.title.y = element_text(size = 11),
+    axis.text.x  = element_text(size = 10),
+    axis.text.y  = element_text(size = 10)
+  ) +
+  
+  #title and axis labels
+  labs(
+    title = "Fig. 6: BMI (Body Mass Index) Distribution by Sex",
+    x     = "Sex",
+    y     = "BMI"
+  )
+```
+
+Fig. 6 presents boxplots of the original BMI values categorized by sex. The ***x and y axes*** indicates sex and BMI values, respectively. Both females and males exhibit distributions centered around `<span style="color: DarkViolet; font-weight: bold;">excessively high figures (approximately 150 - 170)</span>`{=html}`\textcolor{violet}{\textbf{excessively high figures (approximately 150 - 170)}}`{=latex}, with a significant number of `<span style="color: DarkViolet; font-weight: bold;">extreme outliers reaching above 300</span>`{=html}`\textcolor{violet}{\textbf{extreme outliers reaching above 300}}`{=latex}, which is by far beyond the reasonable `<span style="color: DarkViolet; font-weight: bold; font-style: italic">biological range of (20 to 30)</span>`{=html}`\textcolor{violet}{\textbf{\textit{biological range of (20 to 30)}}}`{=latex}. The presence of these elevated central tendencies and extreme outliers strongly suggests a systematic error in the BMI data rather than authentic biological variation. 
+
+Crucially, both sexes demonstrate **similarly unrealistic BMI distributions**, indicating that the problem is **not associated with sex-specific factors** but rather `<span style="color: DarkViolet; font-weight: bold;">stems from an incorrect calculation or unit mismatch</span>`{=html}`\textcolor{violet}{\textbf{stems from an incorrect calculation or unit mismatch}}`{=latex} that impacts the entire dataset. This reinforces that the `<span style="color: DarkViolet; font-weight: bold;">original 'bmi' variable is not reliable</span>`{=html}`\textcolor{violet}{\textbf{original \texttt{bmi} variable is not reliable}}`{=latex} and *inappropriate* for subsequent statistical analysis.
+
+**3. Correction of BMI:**
+
+As a result of the incorrect BMI values, before further analysis, the BMI values are recalculated using the following formula:
+
+`<span style="color: DarkOrange; font-weight: bold">$$\mathrm{BMI} = \frac{\text{weight (in kg)}}{\text{height}^2 (\text{in m})}$$</span>`{=html}`\textcolor{orange}{\textbf{$$\mathrm{BMI} = \frac{\text{weight (in kg)}}{\text{height}^2 (\text{in m})}$$}}`{=latex}
+
+A duplicate of the **`bmi_data`** dataset is made and saved in a separate data frame **`bmi_data_modified`** to guarantee that any changes applied to the copied dataset won't impact the original data. Also it is observed that the heights are `<span style="color: DarkViolet; font-weight: bold;">recorded in centimetres instead of meters</span>`{=html}`\textcolor{violet}{\textbf{recorded in centimetres instead of meters}}`{=latex}, so **they are converted to meters** before calculating the BMIs. The corrected BMIs are stored in a new column named **`bmi_correct`** in the **`bmi_data_modified`** dataframe.
+
+```{r}
+#copy of bmi_data
+bmi_data_modified <- as.data.frame(bmi_data)
+
+#recalculating BMI and storing corrected value in a new column bmi_correct
+#weight in kg and height in cm
+#height converted to m for consistency with the standard BMI formula
+bmi_data_modified$bmi_correct <- 
+  bmi_data_modified$weight / ((bmi_data_modified$height / 100)^2)
+```
+
+After correctly calculating the BMI with weight and height, using appropriate units, the **mean bmi** for both male and female are again recalculated.
+
+**Calculating the mean BMI by Sex using Corrected Values:**
+
+```{r}
+#mean BMI calculation for male and female separately
+#using aggregate() function, which compute a group summary for numeric variables
+
+mean_bmi_sex_correct <- aggregate(
+  bmi_correct ~ sex,            #response variable: bmi_correct; group by:sex
+  data = bmi_data_modified,     #use bmi_data_modofoed frame
+  mean,                         #apply mean function
+  na.rm = TRUE                  #remove na values from bmi col
+)
+
+#show mean BMI values
+mean_bmi_sex_correct
+```
+
+After correctly calculating the BMI with weight and height, using appropriate units, the **mean bmi** for both male and female are again recalculated. This time the average BMI values for both genders are within reasonable `<span style="color: DarkViolet; font-weight: bold; font-style: italic">biological range of (20 to 30)</span>`{=html}`\textcolor{violet}{\textbf{\textit{biological range of (20 to 30)}}}`{=latex}, with results showing mean of `<span style="color: DarkViolet; font-weight: bold;">26.66493 for male</span>`{=html}`\textcolor{violet}{\textbf{26.66493 for male}}`{=latex} and `<span style="color: DarkViolet; font-weight: bold;">24.12762 for female</span>`{=html}`\textcolor{violet}{\textbf{24.12762 for female}}`{=latex}. This indicates that the initial data had a calculation mistake in the BMI, **likely due to inconsistencies in units**, ***(as correcting the unit for height fixed the issue)***, and that the implemented correction effectively addresses the problem. Thus, the revised dataset offers a solid foundation for additional analysis.
+
+### The following code chunk is for generating Fig. 7:  
+
+```{r fig.height=5, fig.align='center', out.width = if (knitr::is_latex_output()) "0.7\\textwidth", warning=FALSE}
+#using ggplot for the boxplot of bmi_correct from bmi_data_modofied 
+ggplot(data = bmi_data_modified,          #using bmi_data_modified dataframe
+       aes(x = sex,
+           y = bmi_correct,
+           fill = sex)) +                 #fill based on sex
+  geom_boxplot(alpha = 0.7,               #semi-transparent outliers
+               outlier.shape = 1,         #hollow point
+               outlier.colour = NULL,
+               outlier.size = 3) +         
+  
+  #plotting the mean bmi points for each sex
+  geom_point(data = mean_bmi_sex_correct, #use the mean from aggregate()
+             aes(x = sex,
+                 y = bmi_correct),
+             color = "black",             #black border
+             fill = "#D62728",            #fill red
+             size = 3,
+             shape = 21,                  #fill point with border
+             show.legend = FALSE) +       #don't add point to legend
+  
+  #mean labels
+  geom_text(data = mean_bmi_sex_correct,
+             aes(x = sex, 
+                y = bmi_correct, 
+                label = paste("Mean BMI = ", round(bmi_correct, 2))), 
+             color = "#D62728",
+             fontface = "bold",
+             vjust = -3,                  #vertical position
+             size = 4) +
+  
+  #manually select the colours for the fill
+  scale_fill_manual(values = c("female" = "pink", 
+                               "male" = "lightblue")) +   
+  #y-ticks every 5
+  scale_y_continuous(
+    breaks = seq(0, max(bmi_data_modified$bmi_correct, na.rm = TRUE), by = 5))+
+  
+  #plot appearance
+  theme(
+    plot.title  = element_text(size = 10, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 11),
+    axis.title.y = element_text(size = 11),
+    axis.text.x  = element_text(size = 10),
+    axis.text.y  = element_text(size = 10),
+  ) +
+  
+  #title and axis labels
+  labs(
+    title = "Fig. 7: BMI (Body Mass Index) Distribution by Sex (Corrected)",
+    x     = "Sex",
+    y     = "BMI"
+  )
+```
+
+Fig. 7 illustrates the distributions of BMI after it has been recalculated using the weight and height, after converting the height `<span style="color: DarkViolet; font-weight: bold; font-style: italic">from centimeters to meters</span>`{=html}`\textcolor{violet}{\textbf{\textit{from centimeters to meters}}}`{=latex} by dividing the height by 100. Unlike in Fig. 6, the recalibrated BMI values now fall within reasonable `<span style="color: DarkViolet; font-weight: bold; font-style: italic">biological range of (20 to 30)</span>`{=html}`\textcolor{violet}{\textbf{\textit{biological range of (20 to 30)}}}`{=latex}. Female BMI values are predominantly in the `<span style="color: DarkViolet; font-weight: bold;">low to mid-20s (with a recalculated mean of approximately 24.1)</span>`{=html}`\textcolor{violet}{\textbf{low to mid-20s (with a recalculated mean of approximately 24.1)}}`{=latex}, whereas male BMI values are ***slightly elevated***, primarily in the `<span style="color: DarkViolet; font-weight: bold;">mid-20s (with a recalculated mean of around 26.7)</span>`{=html}`\textcolor{violet}{\textbf{mid-20s (with a recalculated mean of around 26.7)}}`{=latex}.
+
+While some BMI values are *still elevated (50 or greater)*, they now correspond to a ***feasible overweight or obese classification*** rather than being extreme numerical anomalies.
+
+**3. Comparative Visualization of BMI:**
+
+The original and the corrected BMIs are plotted side by side to get a comparative overview how the recalculation affected the data. The plot is shown in Fig. 8.
+
+### The following code chunk is for generating Fig. 8: 
+
+```{r fig.height=5, fig.width=10, fig.align='center', warning=FALSE}
+#comparison plot before vs after
+#combine raw values of bmi
+bmi_long <- bind_rows(
+  bmi_data %>%
+    transmute(
+      sex,                        #keep sex column
+      bmi = bmi,                  #rename bmi column
+      dataset = "Original BMI"    #tag the dataset   
+    ),
+  bmi_data_modified %>%
+    transmute(
+      sex,                        #keep sex column
+      bmi = bmi_correct,          #rename bmi_correct to bmi
+      dataset = "Corrected BMI"   #tag the dataset
+    )
+)
+
+#combine the means
+mean_bmi_long <- bind_rows(
+  mean_bmi_sex %>%
+    transmute(
+      sex,                       #keep sex column
+      bmi = bmi,                 #rename bmi column
+      dataset = "Original BMI"   #tag the dataset
+    ),
+  mean_bmi_sex_correct %>%
+    transmute(
+      sex,                       #keep sex column
+      bmi = bmi_correct,         #rename bmi_correct column to bmi
+      dataset = "Corrected BMI"  #tag the dataset
+    )
+)
+
+#facet plot
+ggplot(bmi_long, 
+       aes(x = sex, 
+           y = bmi, 
+           fill = sex)) +     #colour by sex
+  
+  geom_boxplot(
+    alpha          = 0.7,
+    outlier.shape  = 1,       #hollow points
+    outlier.colour = NULL,
+    outlier.size   = 3
+  ) +
+
+  #mean points
+  geom_point(
+    data = mean_bmi_long,
+    aes(x = sex, 
+        y = bmi),
+    color = "black",          #black border
+    fill = "#D62728",         #red point
+    size = 3,
+    shape = 21,               #solid point with border
+    show.legend = FALSE       #don't add to legend
+  ) +
+
+  #mean labels
+  geom_text(
+    data = mean_bmi_long,
+    aes(x = sex,
+        y = bmi,
+        label = paste("Mean BMI =", round(bmi, 2))),
+    color = "#D62728",
+    fontface = "bold",
+    vjust = -3,            #vertical position
+    size = 4) +
+
+  #manually select the colours for the fill
+  scale_fill_manual(values = c("female" = "pink", 
+                               "male" = "lightblue")) +  
+
+  #facet: Corrected vs Original
+  facet_wrap(~ dataset, scales = "free_y") +      #separate scales for y-axis
+
+  #plot appearance
+  theme(
+    plot.title  = element_text(size = 12, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 11),
+    axis.title.y = element_text(size = 11),
+    axis.text.x  = element_text(size = 10),
+    axis.text.y  = element_text(size = 10),
+  ) +
+  
+  #title and axis labels
+  labs(
+    title = "Fig. 8: BMI Distribution by Sex: Original vs Corrected",
+    x     = "Sex",
+    y     = "BMI"
+  )
+```
+
+The original BMI values were clearly incorrect with, impossibly high means for both the sexes `<span style="color: DarkViolet; font-weight: bold; font-style: italic">(171.57 for male and 155.12 for female)</span>`{=html}`\textcolor{violet}{\textbf{\textit{(171.57 for male and 155.12 for female)}}}`{=latex}, though after correction the BMI distribution fall within realistic `<span style="color: DarkOrange; font-weight: bold;">biological range of (20 to 30)</span>`{=html}`\textcolor{orange}{\textbf{biological range of (20 to 30)}}`{=latex} `<span style="color: DarkViolet; font-weight: bold; font-style: italic">(26.66 for male and 24.13 for female)</span>`{=html}`\textcolor{violet}{\textbf{\textit{(26.66 for male and 24.13 for female)}}}`{=latex}, confirming the error was resolved, as evident from the above figure.
+
+The **black line** within each box denotes the **central trends of the BMI value distributions**. The impact of adjusting the BMI calculation is highlighted by the significant change in the central tendency between ***Corrected BMI*** and ***Original BMI*** plot. 
+
+**4. Summary Table for Cleaned Data:**
+
+Observations with only plausible values are retained for the further analysis. Also a new data frame **`bmi_data_clean`** is created with the correct `bmi` values and after removing the non-numeric values for the downstream PCA.
+
+```{r}
+#column order in the dataset
+head(bmi_data_modified)
+
+#creating a new dataframe for downstream PCA with cleaned data
+bmi_data_clean <- bmi_data_modified %>% 
+             select(-idx, -bmi) %>%   #remove the old bmi, idx, sex column
+             rename(bmi = bmi_correct) %>%  #rename bmi_correct to bmi
+             relocate(bmi, .after = 2)  #move the new bmi col to original place
+
+#summary of the clean data
+summary(bmi_data_clean)
+```
+
+Following the cleaning process, the average BMI for both genders was within the **anticipated range (20–30)**, meeting the quality control requirements.
+
+**5. Principal Component Analysis (PCA):**   
+
+ The PCA is performed on the `bmi_data_clean` dataset.
+ 
+```{r}
+#remove rows with missing, inf, or NA values and keep numeric only
+bmi_data_clean_new <- bmi_data_clean %>% 
+                      select(-sex)    #removing sex
+bmi_data_clean_numeric <- bmi_data_clean_new[complete.cases(bmi_data_clean_new), ]
+
+#performing PCA
+pca_res <- prcomp(bmi_data_clean_numeric, 
+                   center = TRUE, 
+                   scale = TRUE)
+
+#summary of the pca
+pca_summary <- summary(pca_res)
+print(pca_summary)
+```
+ 
+**6. Variance Explained by Each PC and Outlier Identification:**   
+
+6.a. `<span style="color: DarkOrange; font-weight: bold;">Variance Explained by Each PC</span>`{=html}`\textcolor{orange}{\textbf{Variance Explained by Each PC}}`{=latex}   
+
+The amount of variance attributed to each principal component (PC) was determined from the results of the principal component analysis (PCA). PCA breaks down the overall variance in the dataset into **orthogonal components**, with each component linked to a **standard deviation (sdev)** that indicates the level of variation represented by that component.
+
+The `<span style="color: DarkViolet; font-weight: bold;">Variance of PC</span>`{=html}`\textcolor{violet}{\textbf{Variance of PC}}`{=latex} and `<span style="color: DarkViolet; font-weight: bold;">Proportion of Variance Explained</span>`{=html}`\textcolor{violet}{\textbf{Proportion of Variance Explained}}`{=latex} can be calculated as follows:
+
+`<span style="color: DarkViolet; font-weight: bold;">$$\text{Variance of PC}_i = (\text{sdev}_i)^2$$</span>`{=html}`\textcolor{violet}{\textbf{$$\textbf{Variance of PC}_i = (\text{sdev}_i)^2$$}}`{=latex}
+
+`<span style="color: DarkViolet; font-weight: bold;">$$\text{Proportion of Variance Explained}_i = \frac{(\text{sdev}_i)^2}{\sum_{j} (\text{sdev}_j)^2}$$</span>`{=html}`\textcolor{violet}{\textbf{$$\textbf{Proportion of Variance Explained}_i = \frac{(\text{sdev}_i)^2}{\sum_{j} (\text{sdev}_j)^2}$$}}`{=latex}
+
+The proportions are subsequently visualized with a bar plot, where each bar indicates the portion of total variance represented by a principal component. This facilitates the evaluation of variance distribution among components and aids in identifying the prominent components. In this analysis, the ***sharp drop following the first two components*** suggests that the ***first and second principal components*** account for most of the variability (**$\approx 80.54\%$**) in the dataset.
+
+### The following code chunk is for generating Fig. 9: 
+
+```{r fig.align='center', out.width = if (knitr::is_latex_output()) "0.7\\textwidth", warning=FALSE}
+#variance is the square of the standard deviation
+pr_var <- pca_res$sdev^2
+
+#compute the variance explained by each principal component
+prop_var_exp <- pr_var / sum(pr_var)
+
+#create a dataframe for plotting
+var_exp <- data.frame(variance = prop_var_exp, pc = 1:length(prop_var_exp))
+
+#create the plot
+ggplot(var_exp[1:7, ],           #7 PCs only
+       aes(x = pc,                  
+          y = variance,
+          fill = pc)) +          #colour based on PC value
+  
+    geom_bar(stat = "identity") +
+  
+    #variance values on top of bars
+    geom_text(aes(label = round(variance, 4)),
+              vjust = -0.5,        #vertical position
+              size = 3) +
+  
+    #colouring
+    scale_fill_gradient(low = "red4",
+                        high = "gold") +
+
+    #plot appearance
+    theme(
+      plot.title  = element_text(size = 10, face = "bold", hjust = 0.5),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      axis.text.x  = element_text(size = 10),
+      axis.text.y  = element_text(size = 10),
+      legend.position = "none"          #no legend
+    ) +
+    
+    #title and axis labels
+    labs(
+      title = "Fig. 9: Variance explained by Each PC",
+      x     = "Principal Component",
+      y     = "Variance explained"
+    )
+```
+
+Fig. 9 illustrates the percentage of total variance accounted for by each principal component. The `<span style="color: DarkViolet; font-weight: bold;">first principal component (PC1) accounts for roughly 52.5%</span>`{=html}`\textcolor{violet}{\textbf{first principal component (PC1) accounts for roughly 52.5\%}}`{=latex} of the total variance, while the `<span style="color: DarkViolet; font-weight: bold;">second principal component (PC2) accounts for about 28%</span>`{=html}`\textcolor{violet}{\textbf{second principal component (PC2) accounts for about 28\%}}`{=latex}. Collectively, ***PCs 1 and 2 together*** represent `<span style="color: DarkViolet; font-weight: bold;">about 80.54%</span>`{=html}`\textcolor{violet}{\textbf{about 80.54\%}}`{=latex} of the total variance, suggesting that a significant portion of the data can be effectively captured in a two-dimensional framework.
+
+The subsequent components account for increasingly smaller percentages of variance, with a `<span style="color: DarkViolet; font-weight: bold;">notable decrease occurring after PC2</span>`{=html}`\textcolor{violet}{\textbf{notable decrease occurring after PC2}}`{=latex}. This reinforces the decision to concentrate on `<span style="color: DarkViolet; font-weight: bold;">PCs 1 and 2</span>`{=html}`\textcolor{violet}{\textbf{PCs 1 and 2}}`{=latex} PCs 1 and 2 for visualization and outlier detection, as the ***higher components add relatively minimal additional information***.
+
+6.b. `<span style="color: DarkOrange; font-weight: bold;">Detection of Outliers</span>`{=html}`\textcolor{orange}{\textbf{Detection of Outliers}}`{=latex}
+
+The outliers are detected as follows:
+
+- Outliers are determined by measuring their distance from the center of the PCA score space, utilizing the first two principal components. Observations that exhibit notably ***large distances from the primary clusters*** are flagged for potential removal.
+
+- They are identified by computing the `<span style="color: DarkViolet; font-weight: bold;">scaled squared Euclidean distance</span>`{=html}`\textcolor{violet}{\textbf{scaled squared Euclidean distance}}`{=latex} of each observation from the `<span style="color: DarkViolet; font-weight: bold;">center of the PC1-PC2 space</span>`{=html}`\textcolor{violet}{\textbf{center of the PC1-PC2 space}}`{=latex} and flagging those that `<span style="color: DarkViolet; font-weight: bold;">surpassed the 97.5th percentile</span>`{=html}`\textcolor{violet}{\textbf{surpassed the 97.5th percentile}}`{=latex} of this distance distribution.
+
+- The **97.5th percentile** signifies the ***extreme upper section*** of the distance distribution.  
+
+- This approach, based on PCA, identifies samples that `<span style="color: DarkViolet; font-weight: bold;">diverge from the predominant multivariate pattern</span>`{=html}`\textcolor{violet}{\textbf{diverge from the predominant multivariate pattern}}`{=latex}, instead of `<span style="color: DarkViolet; font-weight: bold;">depending on individual variable thresholds</span>`{=html}`\textcolor{violet}{\textbf{depending on individual variable thresholds}}`{=latex}.
+
+```{r}
+#PC1 and PC2 scores for each observation as dataframe for further plotting
+scores <- as.data.frame(pca_res$x[, 1:2])
+#changing col names
+colnames(scores) <- c("PC1", "PC2")
+
+#distances from the PCA origin for each sample
+#scores are scaled before computing squared Euclidean distance for comparability
+pca_res_dist <- rowSums(scale(scores)^2)
+#adding the distances
+scores$dist <- pca_res_dist
+
+#defining outliers using the 97.5% quantile distance threshold 
+outlier_cutoff <- quantile(pca_res_dist, 0.975)
+
+#flagging outliers (logical flag)
+scores$outlier <- pca_res_dist > outlier_cutoff
+
+#groundings for outliers
+scores$type <- ifelse(scores$outlier, "Outlier", "Non-outlier")
+scores$type <- factor(scores$type, levels = c("Non-outlier", "Outlier"))
+```
+
+**7. PCA Visualization with Outliers:**   
+
+The initial PCA with the outliers is visualized below, with the outliers marked in `<span style="color: red; font-weight: bold;">red</span>`{=html}`\textcolor{red}{\textbf{red}}`{=latex}.
+
+### The following code chunk is for generating Fig. 10: 
+
+```{r fig.height = 5, fig.width = 8, fig.align='center', out.width = if (knitr::is_latex_output()) "0.8\\textwidth", warning=FALSE}
+#variance labels
+pc1_var <- round(prop_var_exp[1] * 100, 2)
+pc2_var <- round(prop_var_exp[2] * 100, 2)
+
+#ggplot for plotting the PCA
+ggplot(scores, 
+       aes(x = PC1, 
+           y = PC2)) +
+  
+    #plotting the points
+    geom_point(aes(colour = type, 
+                   shape = type,
+                   fill = type),
+               size = 2,
+               stroke = 1.2,
+               alpha = 0.5) +
+      
+    # Manual legend
+    scale_shape_manual(values = c("Non-outlier" = 19,    #solid point
+                                  "Outlier" = 21)) +     #point with border
+    
+    #fill values
+    scale_fill_manual(values = c("Non-outlier" = "gold4",    
+                                  "Outlier" = "gold4")) +
+    
+    #setting borders
+    scale_color_manual(values = c("Non-outlier" = "gold4",    
+                                  "Outlier" = "red")) +
+    #remove legend title  
+    labs(color = NULL, shape = NULL, fill = NULL) +
+   #plot appearance
+    theme(
+      plot.title  = element_text(size = 12, face = "bold", hjust = 0.5),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      axis.text.x  = element_text(size = 10),
+      axis.text.y  = element_text(size = 10),
+    ) +
+    
+    #title and axis labels
+    labs(
+      title = "Fig. 10: PCA of Cleaned Numeric Variables with Outliers",
+      x     = paste0("PC1 (", pc1_var, "%)"),
+      y     = paste0("PC2 (", pc2_var, "%)")
+    )
+```
+
+**8. PCA Plot Interpretation:** 
+
+The PCA plot (Fig. 10) displaying the cleaned numeric variables illustrates how the observations are distributed within the space defined by the first two principal components (PC1 and PC2), which account for the main sources of variation in the dataset.
+
+a. `<span style="color: DarkOrange; font-weight: bold;">Overall Overview</span>`{=html}`\textcolor{orange}{\textbf{Overall Overview}}`{=latex}
+
+- The PCA plot indicates that the majority of observations create `<span style="color: DarkViolet; font-weight: bold;">two well-defined and densely populated clusters primarily differentiated along PC2</span>`{=html}`\textcolor{violet}{\textbf{two well-defined and densely populated clusters primarily differentiated along PC2}}`{=latex}, with some additional variation visible along PC1.
+
+- This suggests that **PC2** accounts for a `<span style="color: DarkViolet; font-weight: bold;">significant source of systematic variation in the data</span>`{=html}`\textcolor{violet}{\textbf{significant source of systematic variation in the data}}`{=latex}, while *PC1 provides a secondary, yet still notable, dimension of variability*.
+
+- The tightly-knit character of each cluster implies that most observations exhibit internal consistency post data cleaning.
+
+b. `<span style="color: DarkOrange; font-weight: bold;">Identification of Outliers</span>`{=html}`\textcolor{orange}{\textbf{Identification of Outliers}}`{=latex}
+
+- A few  `<span style="color: red; font-weight: bold;">red</span>`{=html}`\textcolor{red}{\textbf{red}}`{=latex} points are clearly located away from the main clusters of  `<span style="color: #9F6000; font-weight: bold;">gold</span>`{=html}`\textcolor{rgb:red,4;green,2;yellow,1}{\textbf{gold}}`{=latex}, specifically:  
+  - In areas with `<span style="color: DarkViolet; font-weight: bold;">high positive values of PC1</span>`{=html}`\textcolor{violet}{\textbf{high positive values of PC1}}`{=latex}, and   
+  - Near the `<span style="color: DarkViolet; font-weight: bold;">upper limit of PC2</span>`{=html}`\textcolor{violet}{\textbf{upper limit of PC2}}`{=latex}.
+  
+- These observations `<span style="color: DarkViolet; font-weight: bold;">significantly diverge</span>`{=html}`\textcolor{violet}{\textbf{significantly diverge}}`{=latex} from the `<span style="color: DarkViolet; font-weight: bold;">overall multivariate framework</span>`{=html}`\textcolor{violet}{\textbf{overall multivariate framework}}`{=latex} of the dataset and are deemed potential outliers.
+
+- Notably, these points are **not extreme in any single variable**, yet they **appear anomalous when multiple variables are considered together**.
+
+**9. Removing Outliers:** 
+
+Outliers identified through PCA are referenced back to their original row indices and removed from the dataset before further analysis creating a new data frame **`bmi_data_clean_final`**. This method guarantees that later analyses remain `<span style="color: DarkViolet; font-weight: bold;">unaffected by multivariate extremes</span>`{=html}`\textcolor{violet}{\textbf{unaffected by multivariate extremes}}`{=latex} and that only the samples classified as multivariate outliers are discarded, while other data points are kept.
+
+```{r}
+#identify the rows indices of the data points used for PCA 
+pca_rows <- which(complete.cases(bmi_data_clean))
+
+#lookup table linking row index to outlier/type
+outlier_info <- tibble(
+  row_id  = pca_rows,
+  outlier = scores$outlier,
+  type    = scores$type
+)
+
+#join back to bmi_data_clean and drop outliers
+bmi_data_clean_final <- bmi_data_clean %>%
+  mutate(row_id = row_number()) %>%
+  left_join(outlier_info, by = "row_id") %>%
+                                              #keep rows that are either:
+                                              #not in PCA (NA outlier), or
+                                              #in PCA but not flagged as outlier
+  filter(is.na(outlier) | !outlier) %>%
+  select(-row_id, -outlier, -type)
+```
+
+### The following code chunk is for generating Fig. 11: 
+
+```{r fig.height = 5, fig.width = 8, fig.align='center', out.width = if (knitr::is_latex_output()) "0.8\\textwidth", warning=FALSE}
+#remove rows with missing, inf, or NA values and keep numeric only
+bmi_data_clean_final_new <- bmi_data_clean_final %>% 
+                            select(-sex)
+bmi_data_clean_final_numeric <- bmi_data_clean_final_new[complete.cases(bmi_data_clean_final_new), ]
+
+#performing PCA
+pca_res_final <- prcomp(bmi_data_clean_final_numeric, 
+                   center = TRUE, 
+                   scale = TRUE)
+
+#summary of the pca
+pca_summary <- summary(pca_res_final)
+print(pca_summary)
+
+#variance is the square of the standard deviation
+pr_var <- pca_res_final$sdev^2
+
+#compute the variance explained by each principal component
+prop_var_exp <- pr_var / sum(pr_var)
+
+#create a dataframe for plotting
+var_exp <- data.frame(variance = prop_var_exp, pc = 1:length(prop_var_exp))
+
+#PC1 and PC2 scores for each observation as dataframe for further plotting
+scores_final <- as.data.frame(pca_res_final$x[, 1:2])
+#changing col names
+colnames(scores_final) <- c("PC1", "PC2")
+
+#variance labels
+pc1_var <- round(prop_var_exp[1] * 100, 2)
+pc2_var <- round(prop_var_exp[2] * 100, 2)
+
+#ggplot for plotting the PCA
+ggplot(scores_final, 
+       aes(x = PC1, 
+           y = PC2)) +
+  
+    #plotting the points
+    geom_point(colour = "gold4",
+               size = 2,
+               stroke = 1.2,
+               alpha = 0.5) +
+
+   #plot appearance
+    theme(
+      plot.title  = element_text(size = 12, face = "bold", hjust = 0.5),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      axis.text.x  = element_text(size = 10),
+      axis.text.y  = element_text(size = 10),
+    ) +
+    
+    #title and axis labels
+    labs(
+      title = "Fig. 11: PCA of with Outliers Removed",
+      x     = paste0("PC1 (", pc1_var, "%)"),
+      y     = paste0("PC2 (", pc2_var, "%)")
+    )
+```
+
+Outliers were initially identified using a `<span style="color: DarkViolet; font-weight: bold;">97.5th percentile threshold</span>`{=html}`\textcolor{violet}{\textbf{97.5th percentile threshold}}`{=latex} based on PCA score distances and then excluded from the dataset. PCA was subsequently recalculated on this refined dataset **`bmi_data_clean_final`** without any additional outlier detection to evaluate the fundamental data structure after cleaning.
+
+The two previously distinct clusters, primarily influenced by variations in BMI, body fat, and density, are now more clearly defined. Their `<span style="color: DarkViolet; font-weight: bold;">boundaries appear smoother, with a reduction in irregularities</span>`{=html}`\textcolor{violet}{\textbf{boundaries appear smoother, with a reduction in irregularities}}`{=latex} caused by extreme values. This suggests that the true structure of the dataset is now more accurately captured by PC1 and PC2. 
+
+Outliers can significantly affect PCA loadings and ***alter the orientation of the principal components***. Eliminating them leads to more stable PC directions, clearer interpretations of the relationships between variables, and less distortion in the variance explained. 
+
+As a result, the principal components now better reflect true underlying variation instead of noise.
+
+**10. Data Quality Impact:** 
+
+Eliminating outliers identified through PCA enhances the dataset by:  
+
+- Diminishing the impact of **extreme or unusual observations** on subsequent analyses, which might have otherwise `<span style="color: DarkViolet; font-weight: bold;">skewed regression coefficients</span>`{=html}`\textcolor{violet}{\textbf{skewed regression coefficients}}`{=latex} or `<span style="color: DarkViolet; font-weight: bold;">inflated model residuals</span>`{=html}`\textcolor{violet}{\textbf{inflated model residuals}}`{=latex}.  
+
+- Boosting statistical reliability, given that linear models are susceptible to extreme leverage points.  
+
+- Guaranteeing that later analyses more accurately `<span style="color: DarkViolet; font-weight: bold;">reflect the core structure of the data (or trends at the population level)</span>`{=html}`\textcolor{violet}{\textbf{reflect the core structure of the data (or trends at the population level)}}`{=latex}, rather than ***artifacts caused by a limited number of atypical samples***.  
+
+These enhancements support the implementation of PCA-based outlier detection before conducting regression analysis.
+
+**11. Function for Updating BMI and Removing Outliers:** 
+
+To maintain a systematic and reproducible approach for correcting BMI and removing multivariate outliers, a custom R function called **`update_bmi()`** is written in the `cw_functions.R` Rscript. This function combines ***BMI recalculation, data cleaning, and outlier detection using PCA*** into a single reusable pipeline, as long as the variable names are consistent.
+
+`<details><summary>Show Function Code (Click to Reveal)</summary>`{=html}
+```r
+#function sourced from cw_functions.R (Q6)
+#Function for Updating BMI and Removing Outliers
+update_bmi <- function(data) {
+  #copy of data
+  data_modified <- as.data.frame(data)
+  
+  #recalculating BMI and storing corrected value in a new column bmi_correct
+  #weight in kg and height in cm
+  #height converted to m for consistency with the standard BMI formula
+  data_modified$bmi_correct <- 
+    data_modified$weight / ((data_modified$height / 100)^2)
+  
+  #creating a new dataframe for downstream PCA with cleaned data
+  data_clean <- data_modified %>% 
+    select(-idx, -sex, -bmi) %>%   #remove the old bmi, idx, sex column
+    rename(bmi = bmi_correct) %>%  #rename bmi_correct to bmi
+    relocate(bmi, .after = 2)  #move the new bmi col to original place
+  
+  #remove rows with missing, inf, or NA values and keep numeric only
+  data_clean_new <- data_clean %>% 
+                    select(-sex)
+  data_clean_numeric <- data_clean_new[complete.cases(data_clean_new), ]
+  
+  #performing PCA
+  pca_res <- prcomp(data_clean_numeric, 
+                    center = TRUE, 
+                    scale = TRUE)
+  
+  #PC1 and PC2 scores for each observation as dataframe for further plotting
+  scores <- as.data.frame(pca_res$x[, 1:2])
+  #changing col names
+  colnames(scores) <- c("PC1", "PC2")
+  
+  #distances from the PCA origin for each sample
+  #scores are scaled before computing squared Euclidean distance for comparability
+  pca_res_dist <- rowSums(scale(scores)^2)
+  #adding the distances
+  scores$dist <- pca_res_dist
+  
+  #defining outliers using the 97.5% quantile distance threshold 
+  outlier_cutoff <- quantile(pca_res_dist, 0.975)
+  
+  #flagging outliers (logical flag)
+  scores$outlier <- pca_res_dist > outlier_cutoff
+  
+  #groundings for outliers
+  scores$type <- ifelse(scores$outlier, "Outlier", "Non-outlier")
+  scores$type <- factor(scores$type, levels = c("Non-outlier", "Outlier"))
+  
+  #identify the rows indices of the data points used for PCA 
+  pca_rows <- which(complete.cases(data_clean))
+  
+  #lookup table linking row index to outlier/type
+  outlier_info <- tibble(
+    row_id  = pca_rows,
+    outlier = scores$outlier,
+    type    = scores$type
+  )
+  
+  #join back to data_clean and drop outliers
+  data_clean_final <- data_clean %>%
+    mutate(row_id = row_number()) %>%
+    left_join(outlier_info, by = "row_id") %>%
+                                                #keep rows that are either:
+                                                #not in PCA (NA outlier), or
+                                                #in PCA but not flagged as outlier
+    filter(is.na(outlier) | !outlier) %>%
+    select(-row_id, -outlier, -type)
+  
+  #reverting to the original data frame
+  data <- data_clean_final
+  
+  return(data)
+}
+```
+`</details>`{=html}
+
+Testing the **`update_bmi()`** function:  
+
+```{r}
+#calling PCA-based Outlier removal function `update_bmi()` that recalculates BMI
+bmi_final <- update_bmi(data = bmi_data)
+```
+
+Comparing the data frames **`bmi_data_clean_final`** and **`bmi_final`**, as they are suppossedly the same.
+
+```{r}
+#summary of bmi_data_clean_final
+summary(bmi_data_clean_final)
+
+#summary of bmi_final
+summary(bmi_final)
+
+#check using identical
+identical(bmi_data_clean_final, bmi_final)
+
+#check using all.equal
+all.equal(bmi_data_clean_final, bmi_final)
+
+#check using waldo:compare
+compare(bmi_data_clean_final, bmi_final)
+```
+
+# 2.2 Regression Analysis 
+Now that we have cleaned the data, we will perform regression-based analysis for the bmi data.
+
+## `<span style="color: blue;">Q7</span>`{=html}`\textcolor{blue}{Q7}`{=latex}  
+Using simple linear regression to check how well `bmi` (covariate) can predict `body_fat` (response). Check assumptions of the simple linear regression model and also plot the residuals. Comment on the results of your analysis.
+
+Comment on the residuals, what is the shape and what does this tell you about the model fit and any other covariates that should be included?  
+`<span style="color: DarkOrange; font-weight: bold">[5 MARKS]</span>`{=html}`\textcolor{orange}{\textbf{[5 MARKS]}}`{=latex}
+
+### `<span style="color: blue;">Answer 7</span>`{=html}`\textcolor{blue}{Answer 7}`{=latex}
+After completing data cleaning, collecting BMI, and removing multivariate outliers through PCA, we conducted a regression analysis on the cleaned dataset **`bmi_final`** to explore the connection between BMI (`bmi`) and body fat percentage (`body_fat`). The goal was to evaluate the effectiveness of BMI in predicting body fat using a basic linear regression model, and to determine if the model's assumptions were fulfilled.
+
+`<span style="color: DarkOrange; font-weight: bold">Model Specification</span>`{=html}`\textcolor{orange}{\textbf{Model Specification}}`{=latex}
+
+A simple linear regression model was fitted with ***body fat percentage*** as a **response variable** (`<span style="color: DarkViolet; font-weight: bold;">\(y_i\) = body_fat</span>`{=html}`\textcolor{violet}{\textbf{\(y_i\) = \texttt{body\_fat}}}`{=latex}) and ***BMI*** as the **explanatory/predictor variable** (`<span style="color: DarkViolet; font-weight: bold;">\(x_i\) or covariate = bmi</span>`{=html}`\textcolor{violet}{\textbf{\(x_i\) or covariate = \texttt{bmi}}}`{=latex}):
+
+`<span style="color: DarkViolet; font-weight: bold;">$$ y_i = \beta_0 + \beta_1 x_i + \varepsilon_i  $$</span>`{=html}`\textcolor{violet}{\textbf{$$ y_i = \beta_0 + \beta_1 x_i + \varepsilon_i  $$}}`{=latex}
+
+**where**,     
+- $y_i$ = Body fat percentage (`body_fat`)     
+- $x_i$ = Body Mass Index or BMI (`bmi`)     
+- $\beta_0$ = Regression coefficient for intercept / y-intercept when x is 0      
+- $\beta_1$ = Regression coefficient for slope / Effect of covariate on response   
+- $\varepsilon_i$ = Error term / Noise / Random variation     
+
+The **`bmi_clean`** dataset has been utilized to perform a regression of $y_i$ on $x_i$ using the base R function **`lm()`**, which by default applies the `<span style="color: DarkViolet; font-weight: bold;">least squares estimation method</span>`{=html}`\textcolor{violet}{\textbf{least squares estimation method}}`{=latex} for this straightforward linear regression.
+
+```{r}
+#simple linear regression model, where body_fat is response and bmi is predictor
+ls_bmi <- lm(body_fat ~ bmi, data = bmi_final)
+
+# Model summary
+summary(ls_bmi)
+
+#regression coefficients as a named vector
+ls_coefficients <- coef(ls_bmi)
+print(ls_coefficients)
+```
+
+**The fitted model is as follows:**
+
+`<span style="color: DarkViolet; font-weight: bold;">$$ \texttt{body_fat} (y_i) = 4.502 + 0.927 \times \texttt{bmi} (x_i) $$</span>`{=html}`\textcolor{violet}{\textbf{$$ \texttt{body\_fat} (y_i) = 4.502 + 0.927 \times \texttt{bmi} (x_i) $$}}`{=latex}
+
+**where**,   
+  - $y_i$ = `body_fat`     
+  - $x_i$ = `bmi`      
+  - $\beta_0$ = 4.502      
+  - $\beta_1$ = 0.927     
+
+`<span style="color: DarkOrange; font-weight: bold">Regression Results Interpretation</span>`{=html}`\textcolor{orange}{\textbf{Regression Results Interpretation}}`{=latex}
+
+**1.** `<span style="color: DarkGreen; font-weight: bold">Model Coefficient Interpretation</span>`{=html}`\textcolor{OliveGreen}{\textbf{Model Coefficient Interpretation}}`{=latex}
+
+***Please note that the residuals have not been covered in this section. They have been discussed following the QQ plot and are addressed in a separate section at the end.***
+
+- `<span style="color: #C04000; font-weight: bold;">Regression Coefficient for Intercept (\(\beta_0\) = 4.502) Estimate:</span>`{=html}`\textcolor{Mahogany}{\textbf{Regression Coefficient for Intercept (\(\beta_0\) = 4.502) Estimate:}}`{=latex} The intercept indicates the ***projected body fat percentage*** when ***BMI = 0***. While a BMI of zero does not have physiological significance, the intercept is essential for the purposes of model estimation and acts as a `<span style="color: DarkViolet; font-weight: bold;">reference point</span>`{=html}`\textcolor{violet}{\textbf{reference point}}`{=latex} for the model. It is statistically significant `<span style="color: DarkViolet; font-weight: bold;">(p = 3.65e-09)</span>`{=html}`\textcolor{violet}{\textbf{(p = 3.65e-09)}}`{=latex}, showing that it is different from zero.
+
+- `<span style="color: #C04000; font-weight: bold;">Regression Coefficient for Slope (\(\beta_1\) = 0.927) Estimate:</span>`{=html}`\textcolor{Mahogany}{\textbf{Regression Coefficient for Slope (\(\beta_1\) = 0.927) Estimate:}}`{=latex} The BMI coefficient is both ***positive and statistically significant*** `<span style="color: DarkViolet; font-weight: bold;">(p < 2e-16)</span>`{=html}`\textcolor{violet}{\textbf{(p < 2e-16)}}`{=latex}. This suggests that for **each unit increase in BMI, the average body fat percentage rises by about 0.927 units**. This robust positive correlation aligns with biological expectations and reinforces BMI's role as a key predictor of body fat.
+
+**2.** `<span style="color: DarkGreen; font-weight: bold">Model Fit and Variance Explained</span>`{=html}`\textcolor{OliveGreen}{\textbf{Model Fit and Variance Explained}}`{=latex}
+
+- `<span style="color: #C04000; font-weight: bold;">Adjusted R-squared (Adjusted \(R^2\) = 0.2343):</span>`{=html}`\textcolor{Mahogany}{\textbf{Adjusted R-squared (Adjusted \(R^2\) = 0.2343):}}`{=latex} The BMI accounts for `<span style="color: DarkViolet; font-weight: bold;">23.5% of the variation</span>`{=html}`\textcolor{violet}{\textbf{23.5\% of the variation}}`{=latex} in body fat percentage. Although this shows a significant relationship and that BMI serves as an important predictor, it also indicates that a ***large portion of variability is still unaccounted for***. Therefore, other factors also play a role in influencing body fat levels.  
+
+- `<span style="color: #C04000; font-weight: bold;">Residual Standard Error (6.81):</span>`{=html}`\textcolor{Mahogany}{\textbf{Residual Standard Error (6.81):}}`{=latex} Predicted body fat values differ from observed values by approximately `<span style="color: DarkViolet; font-weight: bold;">6.8 percentage points</span>`{=html}`\textcolor{violet}{\textbf{6.8 percentage points}}`{=latex} on average. This indicates a reasonable level of predictive accuracy for a model that uses a **single covariate**.  
+
+- `<span style="color: #C04000; font-weight: bold;">F-statistic = 952.6, p-value < 2.2e-16, (3108 degrees of freedom):</span>`{=html}`\textcolor{Mahogany}{\textbf{F-statistic = 952.6, p-value < 2.2e-16, (3108 degrees of freedom):}}`{=latex} The highly significant F-test indicates that BMI considerably enhances body fat prediction as compared to a null model without any predictors.
+
+`<span style="color: DarkOrange; font-weight: bold">Assumption Checks for Simple Linear Regression Model</span>`{=html}`\textcolor{orange}{\textbf{Assumption Checks for Simple Linear Regression Model}}`{=latex}
+
+Once the simple linear regression model has been fitted, it is crucial to check if the fundamental assumptions of linear regression are adequately met. These assumptions are vital for the validity of parameter estimates, statistical tests, and confidence intervals. To evaluate these assumptions, both individual diagnostic plots and a standardized panel for regression diagnostics were analyzed. The four-panel overview of regression diagnostics *(residuals against fitted values, normal QQ plot, scale-location plot, and residuals against leverage plot)*, offers a thorough visual evaluation of the model's adequacy.
+
+`<span style="color: DarkViolet; font-weight: bold;">Key assumptions evaluated:</span>`{=html}`\textcolor{violet}{\textbf{Key assumptions evaluated:}}`{=latex}   
+
+  1. Linearity          
+  2. Homoscedasticity (constant variance of residuals)             
+  3. Normality of residuals    
+  
+**1.** `<span style="color: DarkGreen; font-weight: bold">Linearity</span>`{=html}`\textcolor{OliveGreen}{\textbf{Linearity}}`{=latex}
+
+The assumption of linearity suggests that the connection between the predictor (`bmi`) and the response (`body_fat`) is roughly linear.  
+
+- The highly significant slope coefficient `<span style="color: DarkViolet; font-weight: bold;">(p < 2e-16)</span>`{=html}`\textcolor{violet}{\textbf{(p < 2e-16)}}`{=latex} demonstrates a strong positive linear relationship between BMI and body fat.  
+
+- With each one unit rise in BMI, the anticipated body fat percentage `<span style="color: DarkViolet; font-weight: bold;">increases by about 0.96 units</span>`{=html}`\textcolor{violet}{\textbf{increases by about 0.96 units}}`{=latex}.  
+
+- The scatter plot (Fig. 12) illustrating body fat against BMI (including the fitted regression line) clearly indicates an `<span style="color: DarkViolet; font-weight: bold;">upward trend</span>`{=html}`\textcolor{violet}{\textbf{upward trend}}`{=latex} that supports the suitability of a linear model.  
+
+### The following code chunk is for generating Fig. 12: 
+
+```{r fig.align='center', out.width = if (knitr::is_latex_output()) "0.8\\textwidth", warning=FALSE}
+#use ggplot
+ggplot(data = bmi_final,
+       aes(x = bmi,
+           y = body_fat)) +
+  
+  #scatter points
+  geom_point(colour = "blue",
+             alpha = 0.4,
+             size = 2) +
+  
+  #add regression line
+  geom_smooth(method = "lm",         #use least square method
+              se = FALSE,
+              colour = "red",
+              linewidth = 1.2,
+              linetype = "dashed") +
+  #plot appearance
+    theme(
+      plot.title  = element_text(size = 10, face = "bold", hjust = 0.5),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      axis.text.x  = element_text(size = 10),
+      axis.text.y  = element_text(size = 10),
+    ) +
+    
+    #title and axis labels
+    labs(
+      title = "Fig. 12: Relationship Between BMI and Body Fat Percentage",
+      x     = "Body Mass Index (BMI)",
+      y     = "Body Fat Percentage"
+    )
+```
+
+In Fig. 12, every blue dot symbolizes a single observation, with BMI plotted on the X axis and body fat percentage on the Y axis. The red regression line illustrates that `<span style="color: DarkViolet; font-weight: bold;">as BMI rises, body fat also tends to increase</span>`{=html}`\textcolor{violet}{\textbf{as BMI rises, body fat also tends to increase}}`{=latex}, thereby validating the linear assumption of simple linear regression. While the trend is evident, the ***distribution of points becomes broader at elevated BMI levels***, suggesting ***greater variability in body fat among individuals with higher BMI***.
+
+**2.** `<span style="color: DarkGreen; font-weight: bold">Homoscedasticity (constant variance of residuals)</span>`{=html}`\textcolor{OliveGreen}{\textbf{Homoscedasticity (constant variance of residuals)}}`{=latex}
+
+A key assumption of simple linear regression is homoscedasticity, which stipulates that the ***variance of the residuals should be roughly constant throughout the entire range of predicted values***. In other terms, the distribution of residuals ought to be similar for low, medium, and high predicted values of the outcome variable. 
+
+Breaches of this assumption occur when the ***variability in residuals systematically increases or decreases alongside the predicted values***, a situation referred to as heteroscedasticity.
+
+To visually evaluate this assumption, a plot of residuals against fitted values (Fig. 13) was created. In this diagnostic plot, the residuals should resemble a random scatter centered around zero, without any discernible pattern or trend, and evenly distributed across the range of fitted values.
+
+### The following code chunk is for generating Fig. 13:
+
+```{r fig.align='center', out.width = if (knitr::is_latex_output()) "0.8\\textwidth", warning=FALSE}
+#data frame from fitted values and residuals from model
+res_df <- data.frame(fitted = fitted(ls_bmi),        #fitted values
+                     residuals = resid(ls_bmi),      #residuals
+                     std_resid = rstandard(ls_bmi), #standardised residuals
+                     leverage  = hatvalues(ls_bmi), #leverage (hat values)
+                     cooks = cooks.distance(ls_bmi))     #Cook's distance      
+
+#using ggplot
+ggplot(data = res_df,
+       aes(x = fitted,
+           y = residuals)) +
+  
+  #scatter points
+  geom_point(colour = "blue",
+             alpha = 0.4,
+             size = 2) +
+  
+  #horizental line
+  geom_hline(yintercept = 0,
+             colour = "red",
+             linewidth = 1.2,
+             linetype = "dashed") +
+  
+  #plot appearance
+    theme(
+      plot.title  = element_text(size = 10, face = "bold", hjust = 0.5),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      axis.text.x  = element_text(size = 10),
+      axis.text.y  = element_text(size = 10),
+    ) +
+    
+    #title and axis labels
+    labs(
+      title = "Fig. 13: Residuals vs Fitted Values",
+      x     = "Fitted values",
+      y     = "Residuals"
+    )
+```
+
+Fig. 13 illustrates the residuals plotted against the fitted values from the simple linear regression model relating body fat percentage to BMI.
+
+`<span style="color: DarkOrange; font-weight: bold">The main points of observation are as follows:</span>`{=html}`\textcolor{orange}{\textbf{The main points of observation are as follows:}}`{=latex}
+
+i. The residuals are `<span style="color: DarkViolet; font-weight: bold;">evenly distributed around the zero line (horizontal reference)</span>`{=html}`\textcolor{violet}{\textbf{evenly distributed around the zero line (horizontal reference)}}`{=latex} across the entire range of predicted values. This suggests that the `<span style="color: DarkViolet; font-weight: bold;">model does not consistently overestimate or underestimate</span>`{=html}`\textcolor{violet}{\textbf{model does not consistently overestimate or underestimate}}`{=latex} body fat and that a linear regression model is suitable. 
+
+ii. There is an `<span style="color: DarkViolet; font-weight: bold;">absence of any noticeable curved or systematic pattern</span>`{=html}`\textcolor{violet}{\textbf{absence of any noticeable curved or systematic pattern}}`{=latex} in the residuals (for instance, U-shaped or inverted U-shaped patterns). This reinforces the idea that the linear model effectively captures the relationship between BMI and body fat.
+
+iii. The `<span style="color: DarkViolet; font-weight: bold;">variability of the residuals</span>`{=html}`\textcolor{violet}{\textbf{variability of the residuals}}`{=latex} tends to `<span style="color: DarkViolet; font-weight: bold;">increase slightly with higher fitted values</span>`{=html}`\textcolor{violet}{\textbf{increase slightly with higher fitted values}}`{=latex}, especially at `<span style="color: DarkViolet; font-weight: bold;">elevated predicted body fat percentages</span>`{=html}`\textcolor{violet}{\textbf{elevated predicted body fat percentages}}`{=latex}. This pattern, `<span style="color: DarkViolet; font-weight: bold;">resembling a fan shape, indicates mild heteroscedasticity</span>`{=html}`\textcolor{violet}{\textbf{resembling a fan shape, indicates mild heteroscedasticity}}`{=latex}, wherein the variability of body fat increases for individuals with greater BMI. Such a trend is biologically plausible, as body fat composition may vary more significantly at higher BMI levels.  
+
+iv. Although some residuals reach values around $\pm 20$, these are not isolated or extreme relative to the main cluster of points. This implies that no individual data point is disproportionately affecting the fitted model.
+
+**3.** `<span style="color: DarkGreen; font-weight: bold">Normality of residuals</span>`{=html}`\textcolor{OliveGreen}{\textbf{Normality of residuals}}`{=latex}
+
+The normality of residuals is crucial for valid hypothesis testing and constructing confidence intervals. This assumption suggests that the differences between the observed and predicted values result from random variability instead of systematic model mis-specification.
+
+To assess this assumption, a normal QQ (quantile-quantile) plot (Fig. 14B) of the residuals was analysed. When the residuals follow a normal distribution, the points displayed should roughly align with the reference line. Deviations from this line, especially in the extremities, indicate a departure from normality and may point to skewness, heavy tails, or lingering outliers.
+
+To further support the QQ plot, a histogram (Fig. 14A) of the regression residuals was included as an additional diagnostic tool. The histogram offers a straightforward visual representation of the empirical distribution of the residuals, enabling the evaluation of symmetry around zero, the overall shape (whether bell-shaped or skewed), and the existence of extreme values or heavy tails.
+
+Utilizing both plots together provides a more comprehensive and intuitive examination of the normality assumption, combining the distributional shape (histogram) with a quantile-based assessment (QQ plot).
+
+### The following code chunk is for generating Fig. 14:
+
+```{r fig.width=9, fig.align='center', warning=FALSE}
+#use ggplot for the histogram
+p_hist <- ggplot(data = res_df, 
+                 aes(x = residuals)) +
+  #histogram
+  geom_histogram(bins = 30,
+                fill = "lightblue",
+                color = "black") +
+  #axes labels
+  labs(x = "Residuals", y = "Frequency") +
+  
+  #plot subtitle
+  ggtitle("A") +
+  
+  #appearance
+  theme(
+    plot.title  = element_text(face = "bold", hjust = 0),
+    axis.title.x = element_text(size = 11, face = "bold"),
+    axis.title.y = element_text(size = 11, face = "bold")
+  )
+
+#QQ plot using ggplot
+p_qq <- ggplot(data = res_df, 
+               aes(sample = residuals)) +
+  
+  #add the QQ points layer
+  stat_qq(color = alpha("black", 0.5),
+          size = 2,
+          shape = 19) +
+  
+  #add the QQ line
+  stat_qq_line(color = "red",
+          linewidth = 1.2,
+          linetype = "dashed") +
+  
+  #plot subtitle
+  ggtitle("B") +
+  
+  #axes labels
+  labs(x = "Theoretical Quantiles", 
+       y = "Sample Quantiles") +
+  
+  #appearance
+  theme(
+    plot.title  = element_text(face = "bold", hjust = 0),
+    axis.title.x = element_text(size = 11, face = "bold"),
+    axis.title.y = element_text(size = 11, face = "bold")
+  )
+
+#merging the plots using patchwork
+(p_hist | p_qq) +
+  #adding title to merged plot
+  plot_annotation(title = 
+"Fig. 14: Diagnostic Plots for Regression Residuals: A. Histogram, B. QQ Plot",
+    
+    #appearance
+    theme = theme(
+      plot.title = element_text(face = "bold", hjust = 0.5, size = 10)
+    )
+  )
+```
+
+`<span style="color: DarkOrange; font-weight: bold">The main points of observation are as follows:</span>`{=html}`\textcolor{orange}{\textbf{The main points of observation are as follows:}}`{=latex}
+
+`<span style="color: DarkViolet; font-weight: bold;">Panel A: Histogram of Residuals (Fig. 14A)</span>`{=html}`\textcolor{violet}{\textbf{Panel A: Histogram of Residuals (Fig. 14A)}}`{=latex}
+
+i. The residuals cluster around zero, indicating that there is ***no consistent over or under-prediction*** by the model.  
+
+ii. The distribution is roughly symmetric, resembling a bell-shaped curve.  
+
+iii. Slightly elongated tails can be seen at both ends, suggesting ***minor deviations from perfect normality***.  
+
+iv. **Two peaks are nearly observable**, which implies that the dataset may include ***systematically different subgroups***, such as males versus females, or individuals with varying body composition profiles (for instance, high muscle mass compared to high fat mass at similar BMI levels). Since the recreation model uses **only BMI as the predictor, the residuals tend to cluster differently among the subgroups**, leading to reduced multiple peaks.
+
+`<span style="color: DarkViolet; font-weight: bold;">Panel B: QQ Plot of Residuals (Fig. 14B)</span>`{=html}`\textcolor{violet}{\textbf{Panel B: QQ Plot of Residuals (Fig. 14B)}}`{=latex}
+
+i. Most points are situated **near the reference line, particularly in the centre**, indicating a ***strong alignment with a normal distribution***.  
+
+ii. Deviations can be seen in the **lower and upper tails**, consistent with the **slightly heavier tails observed in the histogram**.
+
+iii. These deviations remain minor and are not unexpected due to the large sample size.  
+
+In summary, both the histogram and QQ plot suggest that the regression residuals are nearly normally distributed, with only slight tail deviations. Such minor departures do not breach the assumptions of linear regression and do not undermine the integrity of statistical inference, especially in large datasets.
+
+**4.** `<span style="color: DarkGreen; font-weight: bold">Checking Regression Assumption Using A Four-Panel Summary Diagnostic Plots</span>`{=html}`\textcolor{OliveGreen}{\textbf{Checking Regression Assumption Using A Four-Panel Summary Diagnostic Plots}}`{=latex}
+
+Alongside the generation of individual diagnostic plots such as scatter plots, residual-fitted plots, histograms, and QQ plots, a standardized four-panel diagnostic summary for linear regression models (Fig. 15) is also included. These visualizations facilitate a simultaneous evaluation of the fundamental assumptions underlying single linear regression: linearity, homoscedasticity, normality of residuals, and the absence of influential observations.
+
+The produced plots comprise the following:          
+
+1. **Residuals vs Fitted Plot:** This visual representation examines linearity and homoscedasticity. 
+
+2. **Normal QQ Plot:** This plot is crucial for the accuracy of statistical inferences, which include t-tests, F-tests, confidence intervals, and p-values provided by the model.    
+
+3. **Scale-Location Plot:** This visualization assesses whether residual variance remains constant across the fitted values.      
+
+4. **Residuals vs Leverage Plot:** This diagnostic plot evaluates whether any observations significantly impact the model.
+
+
+### The following code chunk is for generating Fig. 15:
+
+```{r fig.width=12, fig.height=8, fig.align='center', warning=FALSE}
+#residual vs fitted (A)
+p1 <- ggplot(data = res_df,
+       aes(x = fitted,
+           y = residuals)) +
+  #scatter points
+  geom_point(colour = "blue",
+             alpha = 0.4,
+             size = 2) +
+  #smooth
+  geom_smooth(method = "loess",
+              se = FALSE,
+              colour = "red",
+              linewidth = 1.2) +
+  #plot subtitle
+  ggtitle("A. Residuals vs Fitted") +
+  #plot appearance
+    theme(
+      plot.title  = element_text(size = 10, face = "bold", hjust = 0.5),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      axis.text.x  = element_text(size = 10),
+      axis.text.y  = element_text(size = 10),
+    ) +
+    #axis labels
+    labs(
+      x     = "Fitted values",
+      y     = "Residuals"
+    )
+
+#mormal QQ (B)
+p2 <- ggplot(data = res_df, 
+               aes(sample = std_resid)) +
+  #add the QQ points layer
+  stat_qq(color = alpha("blue", 0.5),
+          size = 2,
+          shape = 19) +
+  #add the QQ line
+  stat_qq_line(color = "red",
+          linewidth = 1.2,
+          linetype = "dashed") +
+  #plot subtitle
+  ggtitle("B. Normal Q-Q") +
+  #axes labels
+  labs(x = "Theoretical Quantiles", 
+       y = "Standardised Residuals") +
+  #appearance
+  theme(
+      plot.title  = element_text(size = 10, face = "bold", hjust = 0.5),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      axis.text.x  = element_text(size = 10),
+      axis.text.y  = element_text(size = 10),
+    )
+
+#scale-location (C)
+res_df$sqrt_std_resid <- sqrt(abs(res_df$std_resid))
+p3 <- ggplot(data = res_df,
+             aes(x = fitted,
+                 y = sqrt_std_resid)) +
+  #scatter points
+  geom_point(colour = "blue",
+             alpha = 0.4,
+             size = 2) +
+  #smooth
+  geom_smooth(method = "loess",
+              se = FALSE,
+              colour = "red",
+              linewidth = 1.2) +
+  #plot appearance
+    theme(
+      plot.title  = element_text(size = 10, face = "bold", hjust = 0.5),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      axis.text.x  = element_text(size = 10),
+      axis.text.y  = element_text(size = 10),
+    ) +
+  #plot subtitle
+  ggtitle("C. Scale-Location") +
+    #axis labels
+    labs(
+      x     = "Fitted values",
+      y     = expression(sqrt("|Standardised residuals|"))
+    )
+
+#residual vs leverage
+p4 <- ggplot(data = res_df,
+             aes(x = leverage,
+                 y = std_resid)) +
+  #scatter points
+  geom_point(colour = "blue",
+             alpha = 0.4,
+             size = 2) +
+  #smooth
+  geom_smooth(method = "loess",
+              se = FALSE,
+              colour = "red",
+              linewidth = 1.2) +
+  #plot subtitle
+  ggtitle("D. Residuals vs Leverage") +
+  #plot appearance
+    theme(
+      plot.title  = element_text(size = 10, face = "bold", hjust = 0.5),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      axis.text.x  = element_text(size = 10),
+      axis.text.y  = element_text(size = 10),
+    ) +
+    #axis labels
+    labs(
+      x     = "Leverage",
+      y     = "Standardised Residuals"
+    )
+
+#merging the plots using patchwork
+(p1 | p2) / (p3 | p4) +
+  #adding title to merged plot
+  plot_annotation(title = 
+"Fig. 15: Regression Diagnostic Plots for the Simple Linear Regression Model",
+    
+    #appearance
+    theme = theme(
+      plot.title = element_text(face = "bold", hjust = 0.5, size = 12)
+    )
+  )
+```
+
+`<span style="color: DarkGreen; font-weight: bold">The main points of observation are as follows:</span>`{=html}`\textcolor{OliveGreen}{\textbf{The main points of observation are as follows:}}`{=latex}
+
+`<span style="color: #C04000; font-weight: bold;">Panel A: Residuals vs Fitted Plot (Fig. 15, topleft)</span>`{=html}`\textcolor{Mahogany}{\textbf{Panel A: Residuals vs Fitted Plot (Fig. 15, topleft)}}`{=latex}  
+The residuals are **focused around zero**, showing that the model does not `<span style="color: DarkViolet; font-weight: bold;">systematically overestimate or underestimate predictions</span>`{=html}`\textcolor{violet}{\textbf{systematically overestimate or underestimate predictions}}`{=latex}, which aligns with my individual plotting outcomes. There are no significant curves observed, which supports the assumption of a linear relationship between BMI and body fat.
+
+`<span style="color: #C04000; font-weight: bold;">Panel B: Normal QQ Plot (Fig. 15, topright)</span>`{=html}`\textcolor{Mahogany}{\textbf{Panel B: Normal QQ Plot (Fig. 15, topright)}}`{=latex}  
+The majority of points `<span style="color: DarkViolet; font-weight: bold;">closely adhere to the reference line, particularly in the central quantiles</span>`{=html}`\textcolor{violet}{\textbf{closely adhere to the reference line, particularly in the central quantiles}}`{=latex}, indicating that the `<span style="color: DarkViolet; font-weight: bold;">distribution is approximately normal</span>`{=html}`\textcolor{violet}{\textbf{distribution is approximately normal}}`{=latex}. Small deviations at the extremes suggest slightly heavier tails than would be expected in a completely normal distribution. However, due to the large sample size, these deviations are not severe enough to affect inference. 
+
+`<span style="color: #C04000; font-weight: bold;">Panel C: Scale-Location Plot (Fig. 15, bottomleft) </span>`{=html}`\textcolor{Mahogany}{\textbf{Panel C: Scale-Location Plot (Fig. 15, bottomleft) }}`{=latex}   
+The scale-location plot examines homoscedasticity further. The `<span style="color: DarkViolet; font-weight: bold;">relatively flat trend line</span>`{=html}`\textcolor{violet}{\textbf{relatively flat trend line}}`{=latex} suggests that the `<span style="color: DarkViolet; font-weight: bold;">variance of residuals remains stable across the range of fitted values</span>`{=html}`\textcolor{violet}{\textbf{variance of residuals remains stable across the range of fitted values}}`{=latex}. A slight upward trend at higher fitted values indicates minor heteroscedasticity, but it is not significant enough to undermine the model's reliability.
+
+`<span style="color: #C04000; font-weight: bold;">Panel D: Residuals vs Leverage Plot (Fig. 15, bottomright)</span>`{=html}`\textcolor{Mahogany}{\textbf{Panel D: Residuals vs Leverage Plot (Fig. 15, bottomright)}}`{=latex}    
+This plot highlights influential data points. The `<span style="color: DarkViolet; font-weight: bold;">majority</span>`{=html}`\textcolor{violet}{\textbf{majority}}`{=latex} of observations have `<span style="color: DarkViolet; font-weight: bold;">low leverage with concentrated standardized residuals</span>`{=html}`\textcolor{violet}{\textbf{low leverage with concentrated standardized residuals}}`{=latex}. A few points display higher leverage associated with extreme BMI values, which is anticipated in simple linear regression. Most of these points stayed `<span style="color: DarkViolet; font-weight: bold;">within Cook's distance limits, suggesting that most observations did not have a significant impact</span>`{=html}`\textcolor{violet}{\textbf{within Cook's distance limits, suggesting that most observations did not have a significant impact}}`{=latex} on the fitted model.
+
+`<span style="color: DarkOrange; font-weight: bold">Residual Distribution</span>`{=html}`\textcolor{orange}{\textbf{Residual Distribution}}`{=latex}
+
+```{r}
+summary(resid(ls_bmi))
+```
+
+**1.** `<span style="color: DarkGreen; font-weight: bold">Residual Summary</span>`{=html}`\textcolor{OliveGreen}{\textbf{Residual Summary}}`{=latex}
+
+The residuals are nearly `<span style="color: DarkViolet; font-weight: bold;">centered at zero (median = 0.1401)</span>`{=html}`\textcolor{violet}{\textbf{centered at zero (median = 0.1401)}}`{=latex}, showing there is `<span style="color: DarkViolet; font-weight: bold;">no consistent over or under-prediction</span>`{=html}`\textcolor{violet}{\textbf{no consistent over or under-prediction}}`{=latex} from the model, as can also be seen in the histogram and QQ plot of the residuals (Fig. 14). The `<span style="color: DarkViolet; font-weight: bold;">range of the residuals (-19.97 to 21.33) indicates a degree of variability</span>`{=html}`\textcolor{violet}{\textbf{range of the residuals (-19.97 to 21.33) indicates a degree of variability}}`{=latex}, especially at extreme BMI values. These variations are minor and anticipated due to the large sample size.
+
+**2.** `<span style="color: DarkGreen; font-weight: bold">Shape of Residuals</span>`{=html}`\textcolor{OliveGreen}{\textbf{Shape of Residuals}}`{=latex}   
+
+The figures, specifically Fig. 14 and Fig. 15 (top right), indicate that the residuals exhibit a `<span style="color: DarkViolet; font-weight: bold;">trend of approximate symmetry but are moderately spread out at both ends</span>`{=html}`\textcolor{violet}{\textbf{trend of approximate symmetry but are moderately spread out at both ends}}`{=latex}, suggesting that while the `<span style="color: DarkViolet; font-weight: bold;">linear model captures the main trend, it does not account for all the variability</span>`{=html}`\textcolor{violet}{\textbf{linear model captures the main trend, it does not account for all the variability}}`{=latex}. The histogram presents a distribution resembling a bell shape, though it has slightly heavier tails. This observation is supported by the QQ plot, which reveals minor deviations from normality at both ends. The extent of the residuals indicates that body fat shows significant variation among individuals who have comparable BMI values.
+
+There is a likelihood of mild heteroscedasticity, as the variability tends to rise with increasing BMI values. The scale-location plot (Fig. 15, bottom left) supports this observation by indicating a slight upward trend. The residuals versus leverage plot (Fig. 15, bottom right) reveals `<span style="color: DarkViolet; font-weight: bold;">several points with high BMI that have greater leverage, but none exhibit significant residuals or high Cook's distance</span>`{=html}`\textcolor{violet}{\textbf{several points with high BMI that have greater leverage, but none exhibit significant residuals or high Cook's distance}}`{=latex}. Therefore, there is no individual point that is affecting the regression line significantly; the model maintains its stability.
+
+**3.** `<span style="color: DarkGreen; font-weight: bold">Implications on how fit is the Model</span>`{=html}`\textcolor{OliveGreen}{\textbf{Implications on how fit is the Model}}`{=latex}   
+
+1. The model effectively captures the primary linear relationship between BMI and body fat.  
+2. It demonstrates a good fit, but only accounts for a **moderate amount of variation** (`<span style="color: DarkViolet; font-weight: bold;">\(R^2 \approx 0.23\)</span>`{=html}`\textcolor{violet}{\textbf{\(R^2 \approx 0.23\)}}`{=latex}).  
+3. The model indicates unrepresented structure (as seen with slight bimodality in the histogram in Fig. 14A), suggesting that ***BMI alone does not completely explain differences in body fat percentage***.  
+
+Therefore, although the model is statistically sound, `<span style="color: DarkViolet; font-weight: bold;">body fat is affected by more factors than just BMI</span>`{=html}`\textcolor{violet}{\textbf{body fat is affected by more factors than just BMI}}`{=latex}.  
+
+`<span style="color: DarkOrange; font-weight: bold">Model Limitations and Need for Additional Covariates</span>`{=html}`\textcolor{orange}{\textbf{Model Limitations and Need for Additional Covariates}}`{=latex}
+
+While BMI is a powerful and significantly important predictor, the `<span style="color: DarkViolet; font-weight: bold;">comparatively low \(R^2\) value</span>`{=html}`\textcolor{violet}{\textbf{comparatively low \(R^2\) value}}`{=latex} suggests that `<span style="color: DarkViolet; font-weight: bold;">BMI by itself cannot completely account for variations in body fat</span>`{=html}`\textcolor{violet}{\textbf{BMI by itself cannot completely account for variations in body fat}}`{=latex}. This is anticipated since BMI does not differentiate between fat mass and lean muscle.
+
+`<span style="color: DarkGreen; font-weight: bold">Important covariates that could improve the model:</span>`{=html}`\textcolor{OliveGreen}{\textbf{Important covariates that could improve the model}}`{=latex}  
+
+i. `<span style="color: DarkViolet; font-weight: bold;">Sex:</span>`{=html}`\textcolor{violet}{\textbf{Sex:}}`{=latex} Men and women exhibit different distributions of body fat at the same BMI, which could account for the slight bimodal nature of the residuals observed in the histogram.  
+
+ii. `<span style="color: DarkViolet; font-weight: bold;">Body Area Index (BAI) and Density:</span>`{=html}`\textcolor{violet}{\textbf{Body Area Index (BAI) and Density:}}`{=latex} Incorporating Body Area Index (BAI) and density as predictors could decrease unexplained variance and offer more accurate insights into adiposity and body composition, aiding in the distinction of individuals with the same BMI but varying fat and lean mass proportions. 
+
+iii. `<span style="color: DarkViolet; font-weight: bold;">Height and Weight:</span>`{=html}`\textcolor{violet}{\textbf{Height and Weight:}}`{=latex} Height and weight can reveal non-linear interaction patterns that BMI consolidates into one index.
+
+iv. `<span style="color: DarkViolet; font-weight: bold;">Age:</span>`{=html}`\textcolor{violet}{\textbf{Age:}}`{=latex} Age affects the accumulation of fat and loss of muscle, influencing body fat independent of BMI.
+
+## `<span style="color: blue;">Q8</span>`{=html}`\textcolor{blue}{Q8}`{=latex}  
+Now that we have cleaned the data, we will perform regression-based analysis for the BMI data.
+
+You have checked on how well bmi can predict `body_fat`. Here we will check how well additional covariates can predict `body_fat`. We use the predictors `age`, `bmi`, `bai`, `density`, `weight`, `height`, `sex`, check which of these covariates are significant predictors of `body_fat` using a linear regression model. You should also check the assumptions of the model and plot the residuals. Comment on the results of your analysis.
+`<span style="color: DarkOrange; font-weight: bold">[6 MARKS]</span>`{=html}`\textcolor{orange}{\textbf{[6 MARKS]}}`{=latex}
+
+### `<span style="color: blue;">Answer 8</span>`{=html}`\textcolor{blue}{Answer 8}`{=latex}
+
+After completing data cleaning, collecting BMI, and removing multivariate outliers through PCA, we conducted a regression analysis on the cleaned dataset **`bmi_final`** to explore the connection between BMI (`bmi`) and body fat percentage (`body_fat`). The goal was to evaluate the effectiveness of BMI in predicting body fat using a basic linear regression model, and to determine if the model's assumptions were fulfilled.
+
+In order to **enhance predictive accuracy and lessen unexplained variability** several biologically relevant predictors have been utilised to fit a `<span style="color: DarkViolet; font-weight: bold;">multiple linear regressor</span>`{=html}`\textcolor{violet}{\textbf{multiple linear regressor}}`{=latex} or a regression model which includes **`age`**, **`bai`**, **`bmi`**, **`weight`**, **`density`**, **`height`** and **`sex`**. These variables are selected, as they present various dimensions of body size, fat distribution, and compositions. The objective is to determine which covariate effectively predict **`body_fat`** and assess if a multivariate model provides a superior explanation as compared to various model that uses only BMI.
+
+`<span style="color: DarkOrange; font-weight: bold">Model Specification</span>`{=html}`\textcolor{orange}{\textbf{Model Specification}}`{=latex}
+
+When adding **extra predictors** to the basic regression model, the `<span style="color: DarkViolet; font-weight: bold;">percentage of body fat (\(y_i\))</span>`{=html}`\textcolor{violet}{\textbf{percentage of body fat (\(y_i\))}}`{=latex} is represented as a ***linear combination of the multiple covariates*** used for the prediction, which can be represent as follows:
+
+`<span style="color: DarkViolet; font-weight: bold;">$$ y_i = \beta_0 + \beta_1 x_1 (age) + \beta_2 x_2 (bmi) + \beta_3 x_3 (bai) + \beta_4 x_4 (density) + \beta_5 x_5 (weight) +\beta_6 x_6 (height) +\beta_7 x_7 (sex) +\varepsilon_i  $$</span>`{=html}`\textcolor{violet}{\textbf{$$ y_i = \beta_0 + \beta_1 x_1 (age) + \beta_2 x_2 (bmi) + \beta_3 x_3 (bai) + \beta_4 x_4 (density) + \beta_5 x_5 (weight) +\beta_6 x_6 (height) +\beta_7 x_7 (sex) +\varepsilon_i  $$}}`{=latex} 
+
+**where:**  
+
+  - $y_i$ = Body fat percentage (`body_fat`)
+  - $x_1$,..., $x_7$ = Covariates (`age`, `bmi`, `bai`, `density`, `weight`, `height`, and `sex`)
+  - $\beta_0$ = Regression coefficient for $y$-intercept when $x$ is 0 
+  - $\beta_1$,..., $\beta_7$ = Regression coefficients for each covariate 
+  - $\varepsilon_i$ = Error term
+
+This model reflects the combined impact of biological and demographic factors in estimating the body fat percentage.
+
+`<span style="color: DarkOrange; font-weight: bold">Fitting the Multiple Linear Regression Model</span>`{=html}`\textcolor{orange}{\textbf{Fitting the Multiple Linear Regression Model}}`{=latex}
+
+```{r}
+#cleaned dataset from update_bmi()
+bmi_mlr <- bmi_final  
+
+#sex to categorical variable
+bmi_mlr$sex <- ifelse(bmi_mlr$sex == "male", 1, 2)     #male = 1, female = 2
+
+#fitting a multiple linear regressor for body fat percentage
+#predictors: age, bmi, bai, density, weight, height, sex
+multi_lr <- lm(
+  body_fat ~ age + bmi + bai + density + weight + height + sex,
+  data = bmi_mlr
+)
+
+#model summary
+summary(multi_lr)
+
+#extracting regression coefficients
+multi_lr_coefficient <- coef(multi_lr)
+print(multi_lr_coefficient)
+```
+
+`<span style="color: DarkOrange; font-weight: bold">Regression Results Interpretation</span>`{=html}`\textcolor{orange}{\textbf{Regression Results Interpretation}}`{=latex}
+
+**1.** `<span style="color: DarkGreen; font-weight: bold">Model Fit and Variance Explained</span>`{=html}`\textcolor{OliveGreen}{\textbf{Model Fit and Variance Explained}}`{=latex}
+
+- `<span style="color: #C04000; font-weight: bold;">R-squared Values:</span>`{=html}`\textcolor{Mahogany}{\textbf{R-squared Values:}}`{=latex} The model accounts for `<span style="color: DarkViolet; font-weight: bold;">99.61% of the variability in body fat</span>`{=html}`\textcolor{violet}{\textbf{99.61\% of the variability in body fat}}`{=latex} as demonstrated by the hypothesis testing of fitted model, where:  
+  - `<span style="color: DarkOrange; font-weight: bold">Multiple R-squared:</span>`{=html}`\textcolor{orange}{\textbf{Multiple R-squared:}}`{=latex} **0.9961**, and 
+  - `<span style="color: DarkOrange; font-weight: bold">Adjusted R-squared:</span>`{=html}`\textcolor{orange}{\textbf{Adjusted R-squared:}}`{=latex} **0.9961** also.  
+  
+  These means that more than ***99.6% of the variability*** in the body fat can be explained by the ***predictors included*** in the model: **`age`**, **`bai`**, **`bmi`**, **`weight`**, **`density`**, **`height`** and **`sex`**.
+
+  This indicates a `<span style="color: DarkViolet; font-weight: bold;">highly robust multivariate relationship</span>`{=html}`\textcolor{violet}{\textbf{highly robust multivariate relationship}}`{=latex}, suggesting that this `<span style="color: DarkViolet; font-weight: bold;">group of predictors together offers a remarkably precise estimation</span>`{=html}`\textcolor{violet}{\textbf{group of predictors together offers a remarkably precise estimation}}`{=latex} of body fat percentage (**`body_fat`**). This is vastly ***more effective*** than the ***simple linear regression model based solely on BMI***, which `<span style="color: DarkViolet; font-weight: bold;">accounted for only 23% of the variance</span>`{=html}`\textcolor{violet}{\textbf{accounted for only 23\% of the variance}}`{=latex} in the body fat percentage.
+
+- `<span style="color: #C04000; font-weight: bold;">Residual Standard Error (0.4882):</span>`{=html}`\textcolor{Mahogany}{\textbf{Residual Standard Error (0.4882):}}`{=latex} The residuals are generally very minor, `<span style="color: DarkViolet; font-weight: bold;">usually falling within \(\pm 0.5\) units</span>`{=html}`\textcolor{violet}{\textbf{usually falling within \(\pm 0.5\) units}}`{=latex} of body fat, which demonstrates an exceptionally precise model fit. The ***residual standard error of 0.4482***, for this ***multiple regression model*** is ***significantly less than*** that of the ***simple regression model*** based on BMI alone having ***residual standard error 6.81***, indicating that the incorporation of multiple covariates enhance the models ability to predict body fat percentage (**`body_fat`**).
+
+- `<span style="color: #C04000; font-weight: bold;">F-statistic = 1.124e+05, p-value < 2.2e-16:</span>`{=html}`\textcolor{Mahogany}{\textbf{F-statistic = 1.124e+05, p-value < 2.2e-16:}}`{=latex} The F-statistic is `<span style="color: DarkViolet; font-weight: bold;">1.124e+05</span>`{=html}`\textcolor{violet}{\textbf{1.124e+05}}`{=latex} based on `<span style="color: DarkViolet; font-weight: bold;">3102 degrees of freedom</span>`{=html}`\textcolor{violet}{\textbf{3102 degrees of freedom}}`{=latex} for the residuals with a `<span style="color: DarkViolet; font-weight: bold;">p-value < 2.2e-16</span>`{=html}`\textcolor{violet}{\textbf{p-value < 2.2e-16}}`{=latex} indicating that overall the model is extremely statistically significant.  
+When comparing to the ***BMI only simple regression model*** with **F-statistic = 952.6** and **p-value < 2.2e-16**, the multiple linear regression model shows a significantly superior fit.
+
+`<span style="color: DarkOrange; font-weight: bold">Interpretation of Significance of Different Covariates</span>`{=html}`\textcolor{orange}{\textbf{Interpretation of Significance of Different Covariates Interpretation}}`{=latex}
+
+- `<span style="color: #009B77; font-weight: bold">Density (Highly Significant):</span>`{=html}`\textcolor{Emerald}{\textbf{Density (Highly Significant):}}`{=latex} Density exerts are considerable, negative, and highly significant impact with a `<span style="color: DarkViolet; font-weight: bold;">p-value < 2.2e-16</span>`{=html}`\textcolor{violet}{\textbf{p-value < 2.2e-16}}`{=latex}, making it the most critical and prominent predictor in the model. The `<span style="color: DarkViolet; font-weight: bold;">estimated coefficient is approximately -4.94</span>`{=html}`\textcolor{violet}{\textbf{estimated coefficient is approximately -4.94}}`{=latex}, suggesting that ***minor variations in density lead to substantial changes in predicted body fat***. This finding alings with the principles of body composition physics, where body density serves as a notably strong inverse predictor of body fat percentage.  
+
+   Furthermore, this is probably due to the fact that, **body density is closely associated, both mathematically and physiologically with body fat percentage** via the conversion equation that relates density (**`density`**) to body fat percentage (**`body_fat`**):
+
+   `<span style="color: #C04000; font-weight: bold;">$$ \text{Body fat %} = \frac{495}{\text{Density}} -450$$</span>`{=html}`\textcolor{Mahogany}{\textbf{$$ \text{Body fat \%} = \frac{495}{\text{Density}} -450$$}}`{=latex}   
+
+   This indicates that density (**`density`**) largely dictates body fat percentage (**`body_fat`**), resulting in the model attaining an `<span style="color: DarkViolet; font-weight: bold;">\(R^2 = 0.9961\)</span>`{=html}`\textcolor{violet}{\textbf{\(R^2 = 0.9961\)}}`{=latex}.
+
+- `<span style="color: #009B77; font-weight: bold">BAI or Body Area Index (Moderately Significant):</span>`{=html}`\textcolor{Emerald}{\textbf{BAI or Body Area Index (Moderately Significant):}}`{=latex} BAI a body area index is an important positive indicator of body fat, having a `<span style="color: DarkViolet; font-weight: bold;">p-value = 0.000226</span>`{=html}`\textcolor{violet}{\textbf{p-value = 0.000226}}`{=latex} and an `<span style="color: DarkViolet; font-weight: bold;">estimate = 1.271439e-02</span>`{=html}`\textcolor{violet}{\textbf{estimate = 1.271439e-02}}`{=latex} reflecting strong statistical significance. ***An increase in BAI is associated with an increase in body fat***, which aligns with expectations, as `<span style="color: DarkViolet; font-weight: bold;">BAI take into account both height and hip circumference</span>`{=html}`\textcolor{violet}{\textbf{BAI take into account both height and hip circumference}}`{=latex} in its formula. 
+
+- `<span style="color: #009B77; font-weight: bold">Age (p-value = 0.806711), BMI (p-value = 0.565801), Weight (p-value = 0.753357), Height (p-value = 0.905332), Sex (p-value = 0.470189):</span>`{=html}`\textcolor{Emerald}{\textbf{Age (p-value = 0.806711), BMI (p-value = 0.565801), Weight (p-value = 0.753357), Height (p-value = 0.905332), Sex (p-value = 0.470189):}}`{=latex} Once density and BAI are accounted for in the model to predict body fat percentage, these predictors do not show statistical significance, as suggested by their ***p-values***, which are all `<span style="color: DarkViolet; font-weight: bold;">significantly greater than the commonly accepted threshold of 0.05</span>`{=html}`\textcolor{violet}{\textbf{significantly greater than the commonly accepted threshold of 0.05}}`{=latex}.
+
+`<span style="color: #C04000; font-weight: bold;">This interprets as:</span>`{=html}`\textcolor{Mahogany}{\textbf{This interprets as:}}`{=latex}
+
+1. Their role in estimating body fat is unnecessary due to the presence of more effective predictors such as density and BAI.
+
+2. The model, `<span style="color: DarkViolet; font-weight: bold;">through density and BAI</span>`{=html}`\textcolor{violet}{\textbf{through density and BAI}}`{=latex}, already `<span style="color: DarkViolet; font-weight: bold;">accounts for nearly 99.61% of all the variations</span>`{=html}`\textcolor{violet}{\textbf{accounts for nearly 99.61\% of all the variations}}`{=latex}, leaving a very minimal explanation possible from the other additional covariates.  
+
+3. BMI which ***initially accounted for 23.46% of the variability on its own***, has now lost its significance in the multiple regression model with a **p-value = 0.565801**, after the introduction of more closely related variables. Furthermore, it has a strong correlation with other factors such as height and weight, resulting in a decrease in its statistical significance.
+
+`<span style="color: DarkOrange; font-weight: bold">Normality of residuals</span>`{=html}`\textcolor{orange}{\textbf{Normality of residuals}}`{=latex}    
+
+To assess the normality of residuals, a normal QQ (quantile-quantile) plot (Fig. 16B) was generated and analysed. When the residuals follow a normal distribution, the points displayed should roughly align with the reference line. Deviations from this line, especially in the extremities, indicate a departure from normality and may point to skewness, heavy tails, or lingering outliers.
+
+To further support the QQ plot, a histogram (Fig. 16A) of the regression residuals was included as an additional diagnostic tool. The histogram offers a straightforward visual representation of the empirical distribution of the residuals, enabling the evaluation of symmetry around zero, the overall shape (whether bell-shaped or skewed), and the existence of extreme values or heavy tails.
+
+Utilizing both plots together provides a more comprehensive and intuitive examination of the normality assumption, combining the distributional shape (histogram) with a quantile-based assessment (QQ plot).
+
+### The following code chunk is for generating Fig. 16:
+
+```{r fig.width=9, fig.align='center', warning=FALSE}
+#data frame from fitted values and residuals from model
+res_df <- data.frame(fitted = fitted(multi_lr),        #fitted values
+                     residuals = resid(multi_lr),      #residuals
+                     std_resid = rstandard(multi_lr), #standardised residuals
+                     leverage  = hatvalues(multi_lr), #leverage (hat values)
+                     cooks = cooks.distance(multi_lr))     #Cook's distance    
+
+#use ggplot for the histogram
+p_hist <- ggplot(data = res_df, 
+                 aes(x = residuals)) +
+  #histogram
+  geom_histogram(bins = 30,
+                fill = "lightblue",
+                color = "black") +
+  #axes labels
+  labs(x = "Residuals", y = "Frequency") +
+  
+  #plot subtitle
+  ggtitle("A") +
+  
+  #appearance
+  theme(
+    plot.title  = element_text(face = "bold", hjust = 0),
+    axis.title.x = element_text(size = 11, face = "bold"),
+    axis.title.y = element_text(size = 11, face = "bold")
+  )
+
+#QQ plot using ggplot
+p_qq <- ggplot(data = res_df, 
+               aes(sample = residuals)) +
+  
+  #add the QQ points layer
+  stat_qq(color = alpha("blue", 0.5),
+          size = 2,
+          shape = 19) +
+  
+  #add the QQ line
+  stat_qq_line(color = "red",
+          linewidth = 1,
+          linetype = "dashed") +
+  
+  #plot subtitle
+  ggtitle("B") +
+  
+  #axes labels
+  labs(x = "Theoretical Quantiles", 
+       y = "Sample Quantiles") +
+  
+  #appearance
+  theme(
+    plot.title  = element_text(face = "bold", hjust = 0),
+    axis.title.x = element_text(size = 11, face = "bold"),
+    axis.title.y = element_text(size = 11, face = "bold")
+  )
+
+#merging the plots using patchwork
+(p_hist | p_qq) +
+  #adding title to merged plot
+  plot_annotation(title = 
+"Fig. 16: Diagnostic Plots for Multiple Regression Residuals: A. Histogram, B. QQ Plot",
+    
+    #appearance
+    theme = theme(
+      plot.title = element_text(face = "bold", hjust = 0.5, size = 10)
+    )
+  )
+```
+
+`<span style="color: DarkGreen; font-weight: bold">The main points of observation are as follows:</span>`{=html}`\textcolor{OliveGreen}{\textbf{The main points of observation are as follows:}}`{=latex}
+
+`<span style="color: #C04000; font-weight: bold;">Panel A: Histogram of Residuals (Fig. 16A)</span>`{=html}`\textcolor{Mahogany}{\textbf{Panel A: Histogram of Residuals (Fig. 16A)}}`{=latex}   
+
+i. The histogram presents are `<span style="color: DarkViolet; font-weight: bold;">nearly symmetric bell-shaped distribution, centred at zero</span>`{=html}`\textcolor{violet}{\textbf{nearly symmetric bell-shaped distribution, centred at zero}}`{=latex} with the `<span style="color: DarkViolet; font-weight: bold;">majority of value is falling between -0.5 and +0.5</span>`{=html}`\textcolor{violet}{\textbf{majority of value is falling between -0.5 and +0.5}}`{=latex}. There are **no significant tails, no skewness, and no extreme outliers**.
+
+ii. This observation is corroborated by the ***numerical symmetry of the residuals***, which indicates that the `<span style="color: DarkViolet; font-weight: bold;">mean is 0</span>`{=html}`\textcolor{violet}{\textbf{mean is 0}}`{=latex}, signifying that the `<span style="color: DarkViolet; font-weight: bold;">average of the model residuals is 0</span>`{=html}`\textcolor{violet}{\textbf{average of the model residuals is 0}}`{=latex}, a characteristic of a reliable model.  
+
+iii. The `<span style="color: DarkViolet; font-weight: bold;">median is nearly 0</span>`{=html}`\textcolor{violet}{\textbf{median is nearly 0}}`{=latex}, **suggesting** that the `<span style="color: DarkViolet; font-weight: bold;">distribution is predominantly symmetrical</span>`{=html}`\textcolor{violet}{\textbf{distribution is predominantly symmetrical}}`{=latex}, while the `<span style="color: DarkViolet; font-weight: bold;">interquartile range (comprising 50% of the values) spans between -0.32 and +0.32</span>`{=html}`\textcolor{violet}{\textbf{interquartile range (comprising 50\% of the values) spans between -0.32 and +0.32}}`{=latex}, which aligns with the results from the histogram plotting.  
+
+iv. The ***minimum and maximum values are fairly well-balanced within a range of -1.68 to 1.79***. This trend shows that the `<span style="color: DarkViolet; font-weight: bold;">majority of prediction errors are quite small, within \(\pm 0.3\)</span>`{=html}`\textcolor{violet}{\textbf{majority of prediction errors are quite small, within \(\pm 0.3\)}}`{=latex}, with only a limited number of moderately larger discrepancies.
+
+```{r}
+summary(resid(multi_lr))
+```
+
+`<span style="color: #C04000; font-weight: bold;">Panel B: QQ Plot of Residuals (Fig. 16B)</span>`{=html}`\textcolor{Mahogany}{\textbf{Panel B: QQ Plot of Residuals (Fig. 16B)}}`{=latex}    
+
+i. In the standard QQ plot, the residual points typically align `<span style="color: DarkViolet; font-weight: bold;">nearly perfectly along the 45° reference line</span>`{=html}`\textcolor{violet}{\textbf{nearly perfectly along the 45° reference line}}`{=latex}, with only `<span style="color: DarkViolet; font-weight: bold;">minor deviations at the extreme tails</span>`{=html}`\textcolor{violet}{\textbf{minor deviations at the extreme tails}}`{=latex}. This suggests that the residuals are `<span style="color: DarkViolet; font-weight: bold;">nearly normally distributed</span>`{=html}`\textcolor{violet}{\textbf{nearly normally distributed}}`{=latex}.
+
+`<span style="color: DarkOrange; font-weight: bold">Implications on Model Fit</span>`{=html}`\textcolor{orange}{\textbf{Implications on Model Fit}}`{=latex}
+
+The nearly ideal normal distribution shape, symmetry, and minimal residual variance suggest a remarkable fit of the model. As evident from Fig. 17A histogram, `<span style="color: DarkViolet; font-weight: bold;">the residuals are closely clustered around zero</span>`{=html}`\textcolor{violet}{\textbf{the residuals are closely clustered around zero}}`{=latex} and have a small magnitude with `<span style="color: DarkViolet; font-weight: bold;">maximum of the values falling within \(\pm 0.5\)</span>`{=html}`\textcolor{violet}{\textbf{maximum of the values falling within \(\pm 0.5\)}}`{=latex}, which is exceptionally small relative to the range of body fat measurements. This indicates a `<span style="color: DarkViolet; font-weight: bold;">minimum residual standard error of 0.482</span>`{=html}`\textcolor{violet}{\textbf{minimum residual standard error of 0.482}}`{=latex} along with an `<span style="color: DarkViolet; font-weight: bold;">exceptionally high R-squared value of 0.9961</span>`{=html}`\textcolor{violet}{\textbf{exceptionally high R-squared value of 0.9961}}`{=latex}. Consequently, the model accounts for nearly ***all the variability in the body fat percentage (approximately 99.61%)***, leaving very a little variability unexplained.
+
+There is also no indication of misspecification in the model. A symmetric narrow distribution of the residual indicates that:  
+
+  1. The line assumption holds true.  
+  
+  2. The model is not significantly affected by outliers.  
+  
+  3. The residuals' distribution is neither skewed or bimodal.  
+  
+  4. The errors of the model approximate a Gaussian distribution.  
+
+Since the residuals are `<span style="color: DarkViolet; font-weight: bold;">confined within a narrow range of the fitted values (-1.68154 to 1.79108)</span>`{=html}`\textcolor{violet}{\textbf{confined within a narrow range of the fitted values (-1.68154 to 1.79108)}}`{=latex}, there is `<span style="color: DarkViolet; font-weight: bold;">no sign of either increasing or decreasing variance</span>`{=html}`\textcolor{violet}{\textbf{no sign of either increasing or decreasing variance}}`{=latex}.
+
+`<span style="color: DarkOrange; font-weight: bold">Checking Regression Assumption Using A Four-Panel Summary Diagnostic Plots</span>`{=html}`\textcolor{orange}{\textbf{Checking Regression Assumption Using A Four-Panel Summary Diagnostic Plots}}`{=latex}
+
+A standardized four-panel diagnostic summary for linear regression models (Fig. 17) is also included. These visualizations facilitate a simultaneous evaluation of the fundamental assumptions underlying single linear regression: linearity, homoscedasticity, normality of residuals, and the absence of influential observations.
+
+The produced plots comprise the following:          
+
+1. `<span style="color: #C04000; font-weight: bold;">Residuals vs Fitted Plot:</span>`{=html}`\textcolor{Mahogany}{\textbf{Residuals vs Fitted Plot:}}`{=latex} This visual representation examines linearity and homoscedasticity. 
+
+2. `<span style="color: #C04000; font-weight: bold;">Normal QQ Plot:</span>`{=html}`\textcolor{Mahogany}{\textbf{Normal QQ Plot:}}`{=latex} This plot is crucial for the accuracy of statistical inferences, which include t-tests, F-tests, confidence intervals, and p-values provided by the model.    
+
+3. `<span style="color: #C04000; font-weight: bold;">Scale-Location Plot:</span>`{=html}`\textcolor{Mahogany}{\textbf{Scale-Location Plot:}}`{=latex} This visualization assesses whether residual variance remains constant across the fitted values.      
+
+4. `<span style="color: #C04000; font-weight: bold;">Residuals vs Leverage Plot:</span>`{=html}`\textcolor{Mahogany}{\textbf{Residuals vs Leverage Plot:}}`{=latex} This diagnostic plot evaluates whether any observations significantly impact the model.
+
+`<span style="color: DarkViolet; font-weight: bold;">These plots facilitate concurrent visual evaluation of the fundamental premises of linear regression:</span>`{=html}`\textcolor{violet}{\textbf{These plots facilitate concurrent visual evaluation of the fundamental premises of linear regression:}}`{=latex} 
+
+i. Linearity,
+
+ii. Homoscedasticity, 
+
+iii. The normal distribution of residuals, and 
+
+iv. The lack of influential observations.
+
+### The following code chunk is for generating Fig. 17:
+
+```{r fig.width=12, fig.height=8, fig.align='center', warning=FALSE}
+#residual vs fitted (A)
+p1 <- ggplot(data = res_df,
+       aes(x = fitted,
+           y = residuals)) +
+  #scatter points
+  geom_point(colour = "blue",
+             alpha = 0.4,
+             size = 2) +
+  #smooth
+  geom_smooth(method = "loess",
+              se = FALSE,
+              colour = "red",
+              linewidth = 1.2) +
+  #plot subtitle
+  ggtitle("A. Residuals vs Fitted") +
+  #plot appearance
+    theme(
+      plot.title  = element_text(size = 10, face = "bold", hjust = 0.5),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      axis.text.x  = element_text(size = 10),
+      axis.text.y  = element_text(size = 10),
+    ) +
+    #axis labels
+    labs(
+      x     = "Fitted values",
+      y     = "Residuals"
+    )
+
+#mormal QQ (B)
+p2 <- ggplot(data = res_df, 
+               aes(sample = std_resid)) +
+  #add the QQ points layer
+  stat_qq(color = alpha("blue", 0.5),
+          size = 2,
+          shape = 19) +
+  #add the QQ line
+  stat_qq_line(color = "red",
+          linewidth = 1.2,
+          linetype = "dashed") +
+  #plot subtitle
+  ggtitle("B. Normal Q-Q") +
+  #axes labels
+  labs(x = "Theoretical Quantiles", 
+       y = "Standardised Residuals") +
+  #appearance
+  theme(
+      plot.title  = element_text(size = 10, face = "bold", hjust = 0.5),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      axis.text.x  = element_text(size = 10),
+      axis.text.y  = element_text(size = 10),
+    )
+
+#scale-location (C)
+res_df$sqrt_std_resid <- sqrt(abs(res_df$std_resid))
+p3 <- ggplot(data = res_df,
+             aes(x = fitted,
+                 y = sqrt_std_resid)) +
+  #scatter points
+  geom_point(colour = "blue",
+             alpha = 0.4,
+             size = 2) +
+  #smooth
+  geom_smooth(method = "loess",
+              se = FALSE,
+              colour = "red",
+              linewidth = 1.2) +
+  #plot appearance
+    theme(
+      plot.title  = element_text(size = 10, face = "bold", hjust = 0.5),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      axis.text.x  = element_text(size = 10),
+      axis.text.y  = element_text(size = 10),
+    ) +
+  #plot subtitle
+  ggtitle("C. Scale-Location") +
+    #axis labels
+    labs(
+      x     = "Fitted values",
+      y     = expression(sqrt("|Standardised residuals|"))
+    )
+
+#residual vs leverage
+p4 <- ggplot(data = res_df,
+             aes(x = leverage,
+                 y = std_resid)) +
+  #scatter points
+  geom_point(colour = "blue",
+             alpha = 0.4,
+             size = 2) +
+  #smooth
+  geom_smooth(method = "loess",
+              se = FALSE,
+              colour = "red",
+              linewidth = 1.2) +
+  #plot subtitle
+  ggtitle("D. Residuals vs Leverage") +
+  #plot appearance
+    theme(
+      plot.title  = element_text(size = 10, face = "bold", hjust = 0.5),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      axis.text.x  = element_text(size = 10),
+      axis.text.y  = element_text(size = 10),
+    ) +
+    #axis labels
+    labs(
+      x     = "Leverage",
+      y     = "Standardised Residuals"
+    )
+
+#merging the plots using patchwork
+(p1 | p2) / (p3 | p4) +
+  #adding title to merged plot
+  plot_annotation(title = 
+"Fig. 17: Multiple Regression Diagnostic Plots for the Simple Linear Regression Model",
+    
+    #appearance
+    theme = theme(
+      plot.title = element_text(face = "bold", hjust = 0.5, size = 12)
+    )
+  )
+```
+
+`<span style="color: DarkGreen; font-weight: bold">The main points of observation are as follows:</span>`{=html}`\textcolor{OliveGreen}{\textbf{The main points of observation are as follows:}}`{=latex}
+
+**1.** `<span style="color: #C04000; font-weight: bold;">Panel A: Residuals vs Fitted Plot (Fig. 17, topleft)</span>`{=html}`\textcolor{Mahogany}{\textbf{Panel A: Residuals vs Fitted Plot (Fig. 17, topleft)}}`{=latex}   
+
+   This plot assesses both `<span style="color: DarkViolet; font-weight: bold;">linearity and homoscedasticity</span>`{=html}`\textcolor{violet}{\textbf{linearity and homoscedasticity}}`{=latex}. The residuals are ***tightly and evenly distributed around the horizontal zero line***, showing `<span style="color: DarkViolet; font-weight: bold;">no evident curvature</span>`{=html}`\textcolor{violet}{\textbf{no evident curvature}}`{=latex}. This suggests a `<span style="color: DarkViolet; font-weight: bold;">linear the connection between the predictors and body fat percentage</span>`{=html}`\textcolor{violet}{\textbf{linear the connection between the predictors and body fat percentage}}`{=latex}. The ***vertical range of residuals spans from -2 to +2, indicating a smaller spread*** and that the `<span style="color: DarkViolet; font-weight: bold;">residuals are significantly reduced and more well-behaved</span>`{=html}`\textcolor{violet}{\textbf{residuals are significantly reduced and more well-behaved}}`{=latex} in the multiple regression model. There is also no pronounced pattern of increasing or decreasing spread, i.e., no funnel shape, which indicates constant variance of the residuals, i.e., homoscedasticity.
+
+**2.** `<span style="color: #C04000; font-weight: bold;">Panel B: Normal QQ Plot (Fig. 17, topright)</span>`{=html}`\textcolor{Mahogany}{\textbf{Panel B: Normal QQ Plot (Fig. 17, topright)}}`{=latex}  
+
+   This is crucial for ensuring the ***accuracy of statistical inference***, encompassing `<span style="color: DarkViolet; font-weight: bold;">T-tests, F-tests, confidence intervals and p-values generated by the model</span>`{=html}`\textcolor{violet}{\textbf{T-tests, F-tests, confidence intervals and p-values generated by the model}}`{=latex}. This plot evaluate the normality of the fitted model's residuals. The points lie nearly perfectly `<span style="color: DarkViolet; font-weight: bold;">along the 45° reference line</span>`{=html}`\textcolor{violet}{\textbf{along the 45° reference line}}`{=latex}, with only `<span style="color: DarkViolet; font-weight: bold;">slight variations at extreme tails</span>`{=html}`\textcolor{violet}{\textbf{slight variations at extreme tails}}`{=latex}. This suggests that the ***distribution is roughly normal***.
+
+**3.** `<span style="color: #C04000; font-weight: bold;">Panel C: Scale-Location Plot (Fig. 17, bottomleft) </span>`{=html}`\textcolor{Mahogany}{\textbf{Panel C: Scale-Location Plot (Fig. 17, bottomleft) }}`{=latex} 
+
+  This plot assesses if the `<span style="color: DarkViolet; font-weight: bold;">residual variance remains consistent across the fitted values</span>`{=html}`\textcolor{violet}{\textbf{residual variance remains consistent across the fitted values}}`{=latex}, ***utilising standardised residuals***. The standardised residuals display a `<span style="color: DarkViolet; font-weight: bold;">scattered yet generally horizontal agreement</span>`{=html}`\textcolor{violet}{\textbf{scattered yet generally horizontal agreement}}`{=latex}. There is also `<span style="color: DarkViolet; font-weight: bold;">no significant upward or downward trend observed</span>`{=html}`\textcolor{violet}{\textbf{no significant upward or downward trend observed}}`{=latex}. The `<span style="color: DarkViolet; font-weight: bold;">minor dispersion at the extremes is anticipated with extensively large data sets</span>`{=html}`\textcolor{violet}{\textbf{minor dispersion at the extremes is anticipated with extensively large data sets}}`{=latex} and does not suggest any significant problems. The ***residual's variance remains mostly consistent*** and constant across the fitted values, indicating that ***homoscedasticity is upheld***.
+
+**4.** `<span style="color: #C04000; font-weight: bold;">Panel D: Residuals vs Leverage Plot (Fig. 17, bottomright)</span>`{=html}`\textcolor{Mahogany}{\textbf{Panel D: Residuals vs Leverage Plot (Fig. 17, bottomright)}}`{=latex}    
+
+   This plot evaluates if `<span style="color: DarkViolet; font-weight: bold;">any data points have an excessive influence on the model</span>`{=html}`\textcolor{violet}{\textbf{any data points have an excessive influence on the model}}`{=latex}. Although ***several points show*** `<span style="color: DarkViolet; font-weight: bold;">elevated standardised residuals or leverage, none surpass the threshold set by Cook's distance</span>`{=html}`\textcolor{violet}{\textbf{elevated standardised residuals or leverage, none surpass the threshold set by Cook's distance}}`{=latex}. There are also ***no signs of significantly influential observations that might skew or alter model estimates***. There are also `<span style="color: DarkViolet; font-weight: bold;">no concerning outliers or high leverage points present</span>`{=html}`\textcolor{violet}{\textbf{no concerning outliers or high leverage points present}}`{=latex}, indicating that the `<span style="color: DarkViolet; font-weight: bold;">model is stable and not influenced by specific cases</span>`{=html}`\textcolor{violet}{\textbf{model is stable and not influenced by specific cases}}`{=latex}.
+
